@@ -1,5 +1,6 @@
 import { Settings, ShieldCheck, Truck, Wrench } from "lucide-react";
 import Link from "next/link";
+import WatermarkImage from "./WatermarkImage";
 
 export type ProductCardData = {
   id: number;
@@ -53,11 +54,14 @@ export default function ProductCard({ p }: { p: ProductCardData }) {
         <div className="relative h-[200px] bg-white flex items-center justify-center overflow-hidden">
 
           {imgUrl ? (
-            <img
+            <WatermarkImage
               src={imgUrl}
               alt={p.name}
-              loading="lazy"
+              wrapperClassName="w-full h-full flex items-center justify-center"
               className="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-105"
+              watermarkSize={28}
+              position="bottom-right"
+              opacity={0.6}
             />
           ) : (
             <div className="text-sm text-gray-400">No image</div>

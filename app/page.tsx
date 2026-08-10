@@ -1,10 +1,10 @@
-
 // app/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import TickerBar from "@/components/TickerBar";
 import FeaturedSlider from "@/components/FeaturedSlider";
+import WatermarkImage from "@/components/WatermarkImage";
 
 import { cache } from "react";
 import { PhoneCall, Settings, TrendingUp, Truck, Zap } from "lucide-react";
@@ -275,12 +275,15 @@ export default async function HomePage() {
               >
                 {/* IMAGE */}
                 <div className="relative h-56 bg-gray-200 overflow-hidden">
-                  <img
+                  <WatermarkImage
                     src={cat.ogImage || cat.banner || "/images/no-image.png"}
                     alt={`${cat.name} MCBROTHER`}
+                    wrapperClassName="w-full h-full"
                     className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
+                    watermarkSize={44}
+                    position="bottom-right"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition pointer-events-none" />
                 </div>
 
                 {/* CONTENT */}

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import WatermarkImage from "./WatermarkImage";
 
 export type Item = {
   id: number;
@@ -46,6 +46,7 @@ export default function FeaturedSlider({
   const maxIndex = Math.max(0, items.length - spv);
 
   const [index, setIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const trackRef = useRef<HTMLUListElement>(null);
   const startX = useRef(0);
@@ -59,10 +60,22 @@ export default function FeaturedSlider({
     setIndex((i) => Math.min(i, maxIndex));
   }, [spv, items.length]);
 
+  // ===== AUTO PLAY =====
+  useEffect(() => {
+    if (maxIndex <= 0 || isPaused) return; // không đủ item để chạy, hoặc đang hover/kéo thì dừng
+
+    const timer = setInterval(() => {
+      setIndex((i) => (i >= maxIndex ? 0 : i + 1));
+    },2500);
+
+    return () => clearInterval(timer);
+  }, [maxIndex, isPaused]);
+
   // ===== DRAG =====
   const onStart = (clientX: number) => {
     dragging.current = true;
     startX.current = clientX;
+    setIsPaused(true);
   };
 
   const onMove = (clientX: number) => {
@@ -73,6 +86,7 @@ export default function FeaturedSlider({
   const onEnd = () => {
     if (!dragging.current) return;
     dragging.current = false;
+    setIsPaused(false);
 
     const delta = currentX.current - startX.current;
 
@@ -105,10 +119,14 @@ export default function FeaturedSlider({
       {/* SLIDER */}
       <div
         className="relative overflow-hidden"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => {
+          setIsPaused(false);
+          onEnd();
+        }}
         onMouseDown={(e) => onStart(e.clientX)}
         onMouseMove={(e) => onMove(e.clientX)}
         onMouseUp={onEnd}
-        onMouseLeave={onEnd}
         onTouchStart={(e) => onStart(e.touches[0].clientX)}
         onTouchMove={(e) => onMove(e.touches[0].clientX)}
         onTouchEnd={onEnd}
@@ -134,12 +152,13 @@ export default function FeaturedSlider({
                 <Link href={`/san-pham/${p.slug}`}>
                   <div className="aspect-[4/3] bg-white flex items-center justify-center overflow-hidden">
                     {p.coverImage ? (
-                      <Image
+                      <WatermarkImage
                         src={p.coverImage}
                         alt={p.name}
-                        width={400}
-                        height={300}
+                        wrapperClassName="w-full h-full flex items-center justify-center"
                         className="w-full h-full object-contain p-3 transition duration-300 group-hover:scale-105"
+                        watermarkSize={36}
+                        position="bottom-right"
                       />
                     ) : (
                       <div className="text-gray-400 text-sm">No Image</div>

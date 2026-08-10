@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ImageIcon, PlayCircle } from "lucide-react";
+import WatermarkImage from "./WatermarkImage";
 
 type Props = {
   mainImg: string | null;
@@ -68,11 +69,14 @@ export default function ProductMedia({
       <div className="relative w-full aspect-[4/3] bg-white overflow-hidden flex items-center justify-center">
         {tab === "image" ? (
           mainImg ? (
-            <img
+            <WatermarkImage
               src={mainImg}
               srcSet={mainSrcSet}
               alt={productName}
+              wrapperClassName="w-full h-full flex items-center justify-center"
               className="max-w-full max-h-full object-contain"
+              watermarkSize={56}
+              position="bottom-right"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
