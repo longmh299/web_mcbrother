@@ -525,6 +525,7 @@ export default async function EditProductPage({ params }: Props) {
   const toSlug = function(s){
     return s
       .toLowerCase()
+      .replace(/đ/g, 'd')                                 // 👈 thêm dòng này
       .normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'')
       .replace(/[^a-z0-9\\s-]/g,'')
       .trim()
@@ -819,7 +820,7 @@ export default async function EditProductPage({ params }: Props) {
   }
 
   // ===== INIT =====
-  syncSlug();
+  
   setTimeout(renderSpecAndFaq, 100);
 
   document.addEventListener('visibilitychange', function(){
