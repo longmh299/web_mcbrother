@@ -1,14 +1,11 @@
 // app/sitemap.ts
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
+import { SITE_URL } from "@/lib/site";
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mcbrother.net";
-
-/** regenerate sitemap mỗi 1h (tuỳ nhu cầu) */
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // các route tĩnh
   const staticRoutes: MetadataRoute.Sitemap = [
     "",
     "/san-pham",
@@ -16,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/gioi-thieu",
     "/lien-he",
   ].map((path) => ({
-    url: `${BASE}${path}`,
+    url: `${SITE_URL}${path}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
     priority: path === "" ? 1 : 0.7,
@@ -38,21 +35,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
 
     const productEntries: MetadataRoute.Sitemap = products.map((p) => ({
-      url: `${BASE}/san-pham/${p.slug}`,
+      url: `${SITE_URL}/san-pham/${p.slug}`,
       lastModified: p.updatedAt ?? new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     }));
 
     const postEntries: MetadataRoute.Sitemap = posts.map((x) => ({
-      url: `${BASE}/tin-tuc/${x.slug}`,
+      url: `${SITE_URL}/tin-tuc/${x.slug}`,
       lastModified: x.updatedAt ?? new Date(),
       changeFrequency: "weekly",
       priority: 0.5,
     }));
 
     const categoryEntries: MetadataRoute.Sitemap = categories.map((c) => ({
-      url: `${BASE}/danh-muc/${c.slug}`,
+      url: `${SITE_URL}/${c.slug}`,
       lastModified: c.updatedAt ?? new Date(),
       changeFrequency: "weekly",
       priority: 0.6,
@@ -60,7 +57,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [...staticRoutes, ...categoryEntries, ...productEntries, ...postEntries];
   } catch {
-    // Nếu DB lỗi lúc build, trả về các route tĩnh để không chặn build
     return staticRoutes;
   }
 }
