@@ -16,7 +16,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://mcbrother.com.vn";
 
 export const metadata: Metadata = {
   title:
-    "MCBROTHER JSC | Máy chế biến thực phẩm & máy đóng gói công nghiệp",
+    "Máy chế biến & đóng gói thực phẩm công nghiệp | MCBROTHER",
 
   description:
     "MCBROTHER cung cấp máy chế biến thực phẩm, máy đóng gói, máy chiết rót, máy hút chân không, máy dán nhãn, máy co màng, máy in date, dây chuyền sản xuất và giải pháp tự động hóa cho doanh nghiệp trên toàn quốc.",

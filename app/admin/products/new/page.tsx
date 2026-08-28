@@ -315,13 +315,14 @@ export default async function NewProductPage() {
   const markDirty = function(){ dirty = true; };
 
   // ---------- Auto slug ----------
-  const toSlug = function(s){
+const toSlug = function(s){
     return s
       .toLowerCase()
-      .normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'')
-      .replace(/[^a-z0-9\\s-]/g,'')
+      .replace(/đ/g, 'd')                          // 👈 thêm dòng này
+      .normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9\s-]/g,'')
       .trim()
-      .replace(/[\\s_-]+/g,'-')
+      .replace(/[\s_-]+/g,'-')
       .replace(/^-+|-+$/g,'');
   };
 
