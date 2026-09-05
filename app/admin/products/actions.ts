@@ -66,6 +66,24 @@ function parseAttributes(formData: FormData): AttrInput[] {
   }
 }
 
+// 🔥 parse danh sách ảnh (thư viện ảnh) từ form
+type ImageInput = { url: string; alt?: string };
+
+function parseImages(formData: FormData): ImageInput[] {
+  try {
+    const raw = JSON.parse((formData.get('images') as string) || '[]');
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((im: any) => ({
+        url: String(im?.url ?? '').trim(),
+        alt: String(im?.alt ?? '').trim() || undefined,
+      }))
+      .filter((im) => im.url);
+  } catch {
+    return [];
+  }
+}
+
 export async function createProduct(formData: FormData) {
   const name = asString(formData.get('name'));
   const slug =
@@ -84,6 +102,7 @@ export async function createProduct(formData: FormData) {
   const specTable = JSON.parse((formData.get('specTable') as string) || 'null');
   const faqs = JSON.parse((formData.get('faqs') as string) || '[]');
   const attributesInput = parseAttributes(formData); // 🔥
+  const imagesInput = parseImages(formData); // 🔥
 
   const data = {
     name,
@@ -131,6 +150,14 @@ export async function createProduct(formData: FormData) {
           sort: i,
         })),
       },
+      // 🔥 tạo luôn thư viện ảnh (quan hệ 1-nhiều) cùng lúc tạo sản phẩm
+      images: {
+        create: imagesInput.map((im, i) => ({
+          url: im.url,
+          alt: im.alt || null,
+          sort: i,
+        })),
+      },
     },
   });
 
@@ -158,6 +185,7 @@ export async function updateProduct(formData: FormData) {
   const specTable = JSON.parse((formData.get('specTable') as string) || 'null');
   const faqs = JSON.parse((formData.get('faqs') as string) || '[]');
   const attributesInput = parseAttributes(formData); // 🔥
+  const imagesInput = parseImages(formData); // 🔥
 
   const data = {
     name,
@@ -204,6 +232,15 @@ export async function updateProduct(formData: FormData) {
         create: attributesInput.map((a, i) => ({
           name: a.name,
           value: a.value,
+          sort: i,
+        })),
+      },
+      // 🔥 xoá hết ảnh thư viện cũ, tạo lại từ danh sách mới nhất
+      images: {
+        deleteMany: {},
+        create: imagesInput.map((im, i) => ({
+          url: im.url,
+          alt: im.alt || null,
           sort: i,
         })),
       },

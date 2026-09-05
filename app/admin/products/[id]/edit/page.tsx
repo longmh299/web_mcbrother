@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import RichEditor from "@/components/RichEditor";
 import Script from "next/script";
 import ImageField from "@/components/ImageField";
-
+import ProductImagesField from "@/components/ProductImagesField";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -51,6 +51,10 @@ export default async function EditProductPage({ params }: Props) {
         warranty: true,
         attributes: {
           select: { name: true, value: true },
+          orderBy: { sort: "asc" },
+        },
+        images: {
+          select: { url: true, alt: true },
           orderBy: { sort: "asc" },
         },
       },
@@ -186,7 +190,22 @@ export default async function EditProductPage({ params }: Props) {
                   placeholder="Dán URL ảnh hoặc bấm Upload"
                 />
               </div>
+              {/* Thư viện ảnh (nhiều ảnh) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">
+                  Thư viện ảnh sản phẩm (nhiều ảnh)
+                </label>
+                <ProductImagesField
+                  name="images"
+                  initialImages={product.images.map((im) => ({
+                    url: im.url,
+                    alt: im.alt ?? "",
+                  }))}
+                  folder="mcbrother/products"
+                />
+              </div>
 
+              {/* Video */}
               {/* Video */}
               <div className="space-y-1 md:col-span-2">
                 <label className="block text-sm font-medium">
@@ -311,6 +330,7 @@ export default async function EditProductPage({ params }: Props) {
                 defaultValue={product.warranty ?? "12 tháng"}
                 className="mt-1 w-full rounded-lg border px-3 py-2"
               >
+                <option value="0 tháng">Vật tư tiêu hao không bảo hành</option>
                 <option value="6 tháng">6 tháng</option>
                 <option value="12 tháng">12 tháng</option>
                 <option value="18 tháng">18 tháng</option>

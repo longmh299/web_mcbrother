@@ -116,6 +116,10 @@ const getProduct = cache(async (slug: string) => {
         select: { name: true, value: true },
         orderBy: { sort: 'asc' },
       },
+      images: {
+        select: { url: true, alt: true },
+        orderBy: { sort: 'asc' },
+      },
     },
   });
 });
@@ -205,6 +209,11 @@ export default async function ProductDetailPage(
   const mainImg = cld(p.coverImage, 900, 600);
   const mainSrcSet = cldSet(p.coverImage, 900, 600);
 
+  // 🔥 thư viện ảnh phụ (ngoài ảnh đại diện)
+  const galleryImages = (p.images || [])
+    .map((im) => ({ url: cld(im.url, 900, 600) || im.url, alt: im.alt }))
+    .filter((im) => im.url);
+
   // 🔥 JSON-LD
   const additionalProps: { name: string; value: string }[] = [];
 
@@ -230,7 +239,11 @@ export default async function ProductDetailPage(
     '@type': 'Product',
     name: p.name,
     sku: p.sku || undefined,
-    image: p.coverImage ? [p.coverImage] : undefined,
+    image: p.coverImage
+      ? [p.coverImage, ...galleryImages.map((im) => im.url)]
+      : galleryImages.length
+        ? galleryImages.map((im) => im.url)
+        : undefined,
     description: p.metaDescription || p.short || undefined,
     offers:
       typeof p.price === 'number'
@@ -304,6 +317,7 @@ export default async function ProductDetailPage(
                 mainSrcSet={mainSrcSet}
                 productName={p.name}
                 videoUrl={p.videoUrl}
+                images={galleryImages}
               />
 
             </div>
@@ -324,8 +338,8 @@ export default async function ProductDetailPage(
                 >
                   Nhận báo giá
                 </a>
-
                 <a
+
                   href="tel:0834551888"
                   className="flex-1 border border-[var(--color-border)] text-center py-3 rounded-xl hover:bg-gray-50 hover:shadow-sm hover:border-[var(--color-primary)] transition"
                 >
@@ -344,10 +358,12 @@ export default async function ProductDetailPage(
                     Hàng chính hãng
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-[var(--color-accent)]" />
-                    Bảo hành {p.warranty || "12 tháng"}
-                  </div>
+                  {p.warranty !== "0 tháng" && (
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[var(--color-accent)]" />
+                      Bảo hành {p.warranty || "12 tháng"}
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-[var(--color-accent)]" />
@@ -671,8 +687,8 @@ export default async function ProductDetailPage(
                           >
                             Xem chi tiết
                           </Link>
-
                           <a
+
                             href="https://zalo.me/0834551888"
                             target="_blank"
                             className="flex-1 text-center py-2 rounded bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-dark)] transition"

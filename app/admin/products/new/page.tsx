@@ -5,7 +5,7 @@ import Link from 'next/link';
 import RichEditor from '@/components/RichEditor';
 import Script from 'next/script';
 import ImageField from '@/components/ImageField';
-
+import ProductImagesField from '@/components/ProductImagesField';
 export const dynamic = 'force-dynamic';
 
 export default async function NewProductPage() {
@@ -104,7 +104,15 @@ export default async function NewProductPage() {
                   placeholder="Dán URL ảnh hoặc bấm Upload"
                 />
               </div>
+              {/* Thư viện ảnh (nhiều ảnh) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">
+                  Thư viện ảnh sản phẩm (nhiều ảnh)
+                </label>
+                <ProductImagesField name="images" folder="mcbrother/products" />
+              </div>
 
+              {/* Video */}
               {/* Video */}
               <div className="space-y-1 md:col-span-2">
                 <label className="block text-sm font-medium">Link video (YouTube/Cloudinary)</label>
@@ -170,6 +178,7 @@ export default async function NewProductPage() {
             <div>
               <label className="block text-sm font-medium">Bảo hành (warranty)</label>
               <select name="warranty" className="mt-1 w-full rounded-lg border px-3 py-2" defaultValue="12 tháng">
+                <option value="0 tháng">Vật tư tiêu hao không bảo hành</option>
                 <option value="6 tháng">6 tháng</option>
                 <option value="12 tháng">12 tháng</option>
                 <option value="18 tháng">18 tháng</option>
