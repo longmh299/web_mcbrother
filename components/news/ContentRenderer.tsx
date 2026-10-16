@@ -1,11 +1,11 @@
-'use client';
+// Server component: lọc + chuyển HTML → React ngay trên server, không gửi thư viện xuống trình duyệt.
 
 import parse, {
   domToReact,
   HTMLReactParserOptions,
 } from 'html-react-parser';
 
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 type Props = {
   html: string;
@@ -74,11 +74,7 @@ export default function ContentRenderer({ html }: Props) {
   // 🔥 FORBID_ATTR: ['style'] — chặn TOÀN BỘ inline style (kể cả trong
   // div/span do bài viết dán vào, ví dụ label chú thích ảnh dùng
   // position:absolute; left:...px không responsive), tránh tràn ngang trang.
-  const clean = DOMPurify.sanitize(normalized, {
-    USE_PROFILES: { html: true },
-    FORBID_TAGS: ['script'],
-    FORBID_ATTR: ['style'],
-  });
+  const clean = sanitizeHtml(normalized, { allowStyle: false });
 
   // ===== enhance HTML → React =====
   const options: HTMLReactParserOptions = {
