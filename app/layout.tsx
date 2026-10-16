@@ -9,6 +9,7 @@ import CallCTA from "@/components/CallCTA";
 import GoogleAnalytics from "@/components/Googleanalytics";
 import { SITE_URL, SITE } from "@/lib/site";
 import { DEFAULT_OG_IMAGE } from "@/lib/seo";
+import PublicOnly from "@/components/PublicOnly";
 
 export const metadata: Metadata = {
   // Gốc để Next tự đổi đường dẫn tương đối (ảnh OG, canonical) thành URL đầy đủ
@@ -41,14 +42,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         suppressHydrationWarning
         className="min-h-screen bg-surface text-gray-900 antialiased selection:bg-primary/10 selection:text-primary"
       >
-        <GoogleAnalytics />
-        <HeaderShell />
+        {/* Trang /admin: ẩn header, footer, nút gọi, Zalo, GA của website */}
+        <PublicOnly>
+          <GoogleAnalytics />
+          <HeaderShell />
+        </PublicOnly>
 
         {children}
 
-        <Footer />
-        <CallCTA></CallCTA>
-        <CTA side="right" zalo="0834551888" defaultOpen />
+        <PublicOnly>
+          <Footer />
+          <CallCTA />
+          <CTA side="right" zalo="0834551888" defaultOpen />
+        </PublicOnly>
         {/* <MessengerBtn /> */}
       </body>
     </html>

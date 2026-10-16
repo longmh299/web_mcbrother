@@ -201,4 +201,6 @@ footer *::-moz-selection {
   --color-accent: #F5C400;        /* vàng giảm chói */
   --color-secondary: #159CA3;     /* dùng cho button phụ */
   --color-bg: #F7F9FA;
+  --color-border: #E5E7EB;        /* viền xám nhạt (trước đây chưa khai báo → viền bị đen) */
+  --color-muted: #6B7280;         /* chữ phụ */
 }

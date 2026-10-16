@@ -198,6 +198,10 @@ export default async function ProductDetailPage(
 
   // 🔥 TYPE SAFE
   const specTable = p.specTable as SpecTable | null;
+  // Chỉ hiện bảng so sánh model khi có cột & dòng thật (tránh khung trống)
+  const hasSpecTable =
+    !!specTable && Array.isArray(specTable.columns) && specTable.columns.length > 0 &&
+    Array.isArray(specTable.rows) && specTable.rows.length > 0;
   const faqs = (p.faqs as FAQ[]) || [];
 
   // 🔥 related (không block getProduct)
@@ -525,76 +529,68 @@ export default async function ProductDetailPage(
 
 
           {/* ===== DESCRIPTION ===== */}
-          {(descHtml || p.specTable) && (
-            <div className="mt-12 space-y-6">
-
-              {/* TITLE */}
-              <h2 className="text-xl font-semibold tracking-tight">
+          {(descHtml || hasSpecTable) && (
+            <section className="mt-12 space-y-6">
+              <h2 className="flex items-center gap-3 text-xl font-semibold tracking-tight text-gray-900">
+                <span className="h-6 w-1 rounded-full bg-[var(--color-primary)]" />
                 Mô tả chi tiết
               </h2>
 
-              {/* ===== TABLE (ưu tiên hiển thị) ===== */}
-              {p.specTable && (() => {
-                const specTable = p.specTable as {
-                  columns: string[];
-                  rows: { label: string; values: string[] }[];
-                };
-
-                const columns = specTable.columns || [];
-                const rows = specTable.rows || [];
-
-                return (
-                  <div className="overflow-x-auto">
-                    <div className="bg-white border border-[var(--color-border)] rounded-2xl overflow-hidden shadow-sm">
-
-                      {/* HEADER */}
-                      {/* <div
-                        className="grid text-sm font-semibold bg-gray-50"
-                        style={{ gridTemplateColumns: `200px repeat(${columns.length}, 1fr)` }}
-                      >
-                        <div className="p-3">Thông số</div>
-
-                        {columns.map((col, i) => (
-                          <div key={i} className="p-3 text-center">
-                            {col}
-                          </div>
-                        ))}
-                      </div> */}
-
-                      {/* ROWS */}
-                      {/* {rows.map((row, i) => (
-                        <div
-                          key={i}
-                          className={`grid text-sm border-t border-[var(--color-border)] ${i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            }`}
-                          style={{ gridTemplateColumns: `200px repeat(${columns.length}, 1fr)` }}
-                        >
-                          <div className="p-3 text-[var(--color-muted)] font-medium">
-                            {row.label}
-                          </div>
-
-                          {row.values?.map((val, j) => (
-                            <div key={j} className="p-3 text-center font-medium">
-                              {val}
-                            </div>
+              {/* ===== BẢNG SO SÁNH MODEL ===== */}
+              {hasSpecTable && specTable && (
+                <div>
+                  <h3 className="mb-3 text-[15px] font-semibold text-gray-700">Bảng so sánh model</h3>
+                  <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <table className="w-full min-w-[480px] border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-[var(--color-primary-dark)] text-white">
+                          <th className="sticky left-0 z-10 bg-[var(--color-primary-dark)] px-4 py-3 text-left font-medium">
+                            Thông số
+                          </th>
+                          {specTable.columns.map((col, i) => (
+                            <th key={i} className="whitespace-nowrap px-4 py-3 text-center font-semibold">
+                              {col}
+                            </th>
                           ))}
-                        </div>
-                      ))} */}
-
-                    </div>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {specTable.rows.map((row, i) => (
+                          <tr
+                            key={i}
+                            className={`border-t border-gray-100 transition-colors hover:bg-cyan-50/60 ${
+                              i % 2 ? "bg-gray-50" : "bg-white"
+                            }`}
+                          >
+                            <td
+                              className={`sticky left-0 z-10 w-[32%] px-4 py-3 font-medium text-gray-500 ${
+                                i % 2 ? "bg-gray-50" : "bg-white"
+                              }`}
+                            >
+                              {row.label}
+                            </td>
+                            {specTable.columns.map((_, j) => (
+                              <td key={j} className="px-4 py-3 text-center font-semibold text-gray-900">
+                                {row.values?.[j] || <span className="text-gray-300">—</span>}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                );
-              })()}
+                </div>
+              )}
 
-              {/* ===== HTML CONTENT (CMS) ===== */}
+              {/* ===== NỘI DUNG HTML (CMS) ===== */}
               {descHtml && (
-                <div className="bg-white border border-[var(--color-border)] rounded-2xl p-6 shadow-sm">
-
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
                   <div
                     className="
     blog-content
     prose
     max-w-none
+    text-[15px]
 
     [&_p]:!max-w-none
     [&_h2]:!max-w-none
@@ -608,52 +604,64 @@ export default async function ProductDetailPage(
     prose-headings:text-[var(--color-primary-dark)]
     prose-headings:font-semibold
 
-    prose-h2:my-4
+    prose-h2:mt-8
+    prose-h2:mb-3
+    first:prose-h2:mt-0
     prose-h3:my-3
 
-    prose-p:my-2
+    prose-p:my-3
     prose-p:leading-7
+    prose-p:text-gray-700
 
     prose-li:my-1
-    prose-li:leading-6
+    prose-li:leading-7
+    prose-li:text-gray-700
 
     prose-table:border
-    prose-table:border-[var(--color-border)]
+    prose-table:border-gray-200
     prose-th:bg-gray-50
     prose-th:font-semibold
     prose-td:align-middle
   "
                     dangerouslySetInnerHTML={{ __html: descHtml }}
                   />
-
                 </div>
               )}
-
-            </div>
+            </section>
           )}
+
           {/* ===== FAQ ===== */}
-          {Array.isArray(p.faqs) && p.faqs.length > 0 && (
-            <div className="mt-12 space-y-4">
-              <h2 className="text-xl font-semibold tracking-tight">
+          {faqItems.length > 0 && (
+            <section className="mt-12 space-y-4">
+              <h2 className="flex items-center gap-3 text-xl font-semibold tracking-tight text-gray-900">
+                <span className="h-6 w-1 rounded-full bg-[var(--color-primary)]" />
                 Câu hỏi thường gặp
               </h2>
 
-              <div className="bg-white border border-[var(--color-border)] rounded-2xl divide-y shadow-sm">
-                {p.faqs.map((item: any, i: number) => (
-                  <details key={i} className="group p-4 cursor-pointer">
-                    <summary className="flex justify-between items-center font-medium list-none">
-                      {item.question}
-                      <span className="transition group-open:rotate-180">▼</span>
+              <div className="space-y-3">
+                {faqItems.map((item, i) => (
+                  <details
+                    key={i}
+                    className="group rounded-xl border border-gray-200 bg-white shadow-sm transition open:border-[var(--color-primary)] open:shadow-md"
+                  >
+                    <summary className="flex cursor-pointer list-none items-center gap-4 px-5 py-4 font-medium text-gray-900 [&::-webkit-details-marker]:hidden">
+                      <span className="flex-1">{item.question}</span>
+                      <span
+                        aria-hidden
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-lg leading-none text-gray-500 transition group-open:rotate-45 group-open:bg-[var(--color-primary)] group-open:text-white"
+                      >
+                        +
+                      </span>
                     </summary>
-
-                    <div className="mt-2 text-sm text-[var(--color-muted)] leading-relaxed">
+                    <div className="whitespace-pre-line px-5 pb-5 text-[15px] leading-7 text-gray-600">
                       {item.answer}
                     </div>
                   </details>
                 ))}
               </div>
-            </div>
+            </section>
           )}
+
           {/* ===== RELATED ===== */}
           {related.length > 0 && (
             <div className="mt-14">
