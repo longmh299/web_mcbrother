@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import sanitizeHtml from "sanitize-html";
-
+import { requireAdmin } from '@/lib/auth';
 /* ================= HELPERS ================= */
 
 function toSlug(s: string) {
@@ -24,7 +24,7 @@ function parseTags(raw: string | null | undefined): string[] {
 
 function cleanContent(html: string) {
   return sanitizeHtml(html, {
-    allowedTags: ["p","h2","h3","ul","ol","li","strong","em","a","img","blockquote","div"],
+    allowedTags: ["p", "h2", "h3", "ul", "ol", "li", "strong", "em", "a", "img", "blockquote", "div"],
     allowedAttributes: {
       a: ["href"],
       img: ["src", "alt"],
@@ -40,8 +40,9 @@ function getBool(fd: FormData, key: string) {
 /* ================= CREATE ================= */
 
 export async function createPost(fd: FormData) {
-  "use server";
 
+  "use server";
+  await requireAdmin();
   const title = String(fd.get("title") ?? "").trim();
   if (!title) throw new Error("Thiếu tiêu đề");
 
@@ -94,8 +95,9 @@ export async function createPost(fd: FormData) {
 /* ================= UPDATE ================= */
 
 export async function updatePost(fd: FormData) {
+  
   "use server";
-
+  await requireAdmin();
   const id = Number(fd.get("id"));
   if (!Number.isFinite(id)) throw new Error("ID không hợp lệ");
 
@@ -161,12 +163,13 @@ export async function updatePost(fd: FormData) {
 
 export async function deletePost(fd: FormData) {
   "use server";
+  await requireAdmin();
 
   const id = Number(fd.get("id"));
   if (!Number.isFinite(id)) throw new Error("ID không hợp lệ");
 
   let redirectTarget = "/admin/news?ok=1";
-
+  await requireAdmin();
   try {
     await prisma.post.delete({ where: { id } });
     revalidatePath("/admin/news");

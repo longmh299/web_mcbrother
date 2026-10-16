@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-
+import { requireAdmin } from '@/lib/auth';
 // Helpers
 const asString = (v: FormDataEntryValue | null) => (v ?? '').toString().trim();
 const asBool = (v: FormDataEntryValue | null) =>
@@ -24,6 +24,7 @@ const slugify = (s: string) =>
     .replace(/(^-|-$)/g, '');
 
 export async function createCategory(formData: FormData) {
+   await requireAdmin(); 
   const name = asString(formData.get('name'));
   if (!name) throw new Error('Thiếu tên danh mục');
 
@@ -53,6 +54,7 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(formData: FormData) {
+   await requireAdmin(); 
   const id = asInt(formData.get('id'));
   if (!id) throw new Error('Thiếu id danh mục');
 
@@ -85,6 +87,7 @@ export async function updateCategory(formData: FormData) {
 }
 
 export async function deleteCategory(formData: FormData) {
+   await requireAdmin(); 
   const id = asInt(formData.get('id'));
   if (!id) throw new Error('Thiếu id');
   await prisma.category.delete({ where: { id } });

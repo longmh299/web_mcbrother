@@ -1,6 +1,7 @@
 // app/api/admin/news/[id]/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { denyIfNotAdmin } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -27,9 +28,12 @@ const toTagsUndef = (v: unknown) => {
   return [];
 };
 
-export async function PUT(req: Request, context: any) {
+export async function PUT(req: Request, context: { params: Promise<{ id: string }> }) {
+  const denied = await denyIfNotAdmin();
+  if (denied) return denied;
+
   try {
-    const id = Number(context?.params?.id);
+    const id = Number((await context.params).id);
     if (!Number.isFinite(id)) {
       return NextResponse.json({ ok: false, message: "Invalid id" }, { status: 400 });
     }
@@ -89,9 +93,12 @@ export async function PUT(req: Request, context: any) {
   }
 }
 
-export async function DELETE(_req: Request, context: any) {
+export async function DELETE(_req: Request, context: { params: Promise<{ id: string }> }) {
+  const denied = await denyIfNotAdmin();
+  if (denied) return denied;
+
   try {
-    const id = Number(context?.params?.id);
+    const id = Number((await context.params).id);
     if (!Number.isFinite(id)) {
       return NextResponse.json({ ok: false, message: "Invalid id" }, { status: 400 });
     }

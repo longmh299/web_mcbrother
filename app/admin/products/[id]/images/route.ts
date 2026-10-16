@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { prisma } from "@/lib/prisma";
+import { denyIfNotAdmin } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -12,9 +13,12 @@ cloudinary.config({
   secure: true,
 });
 
-export async function POST(req: Request, context: any) {
+export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
+  const denied = await denyIfNotAdmin();
+  if (denied) return denied;
+
   try {
-    const productId = Number(context?.params?.id);
+    const productId = Number((await context.params).id);
     if (!Number.isFinite(productId)) {
       return NextResponse.json({ error: "Invalid product id" }, { status: 400 });
     }

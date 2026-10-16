@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import ImageField from "@/components/ImageField";
 import SubmitButton from "@/components/SubmitButton";
 import ConfirmDelete from "@/components/ConfirmDelete";
-
+import { requireAdmin } from '@/lib/auth';
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -16,6 +16,7 @@ const bool = (fd: FormData, name: string) =>
 /* ---------- actions ---------- */
 async function createCat(fd: FormData) {
   "use server";
+   await requireAdmin();  
   const name = String(fd.get("name") ?? "").trim();
   if (!name) throw new Error("Thiếu tên chuyên mục");
 
@@ -41,6 +42,7 @@ async function createCat(fd: FormData) {
 
 async function updateCat(fd: FormData) {
   "use server";
+   await requireAdmin();  
   const id = Number(fd.get("id"));
 
   const old = await prisma.postCategory.findUnique({
@@ -90,6 +92,7 @@ async function updateCat(fd: FormData) {
 
 async function deleteCatAction(fd: FormData) {
   "use server";
+   await requireAdmin();  
   const id = Number(fd.get("id"));
   await prisma.postCategory.delete({ where: { id } });
   revalidatePath("/admin/news-categories");

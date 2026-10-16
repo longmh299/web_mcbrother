@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-
+import { requireAdmin } from '@/lib/auth';
 function asString(v: FormDataEntryValue | null) {
   return (v ?? '').toString().trim();
 }
@@ -85,6 +85,7 @@ function parseImages(formData: FormData): ImageInput[] {
 }
 
 export async function createProduct(formData: FormData) {
+    await requireAdmin();    
   const name = asString(formData.get('name'));
   const slug =
     asString(formData.get('slug')) ||
@@ -166,6 +167,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(formData: FormData) {
+ await requireAdmin()
   const id = asInt(formData.get('id'));
   if (!id) throw new Error('Thiếu id sản phẩm');
 
@@ -252,6 +254,7 @@ export async function updateProduct(formData: FormData) {
 }
 
 export async function deleteProduct(formData: FormData) {
+    await requireAdmin();    
   const id = asInt(formData.get('id'));
   if (!id) throw new Error('Thiếu id');
   await prisma.product.delete({ where: { id } });
@@ -259,7 +262,9 @@ export async function deleteProduct(formData: FormData) {
 }
 
 export async function bulkProductOp(formData: FormData) {
+    await requireAdmin();    
   const op = asString(formData.get('op'));
+  
   const ids = formData.getAll('ids').map((v) => Number(v)).filter(Boolean);
   if (!ids.length) return;
 
