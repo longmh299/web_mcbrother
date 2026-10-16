@@ -15,6 +15,8 @@ type Props = {
   height?: number;
   placeholder?: string;
   className?: string;
+  /** Ẩn phần kiểm tra SEO / xem trước / hướng dẫn bên dưới (form mới tự hiển thị ở cột phải) */
+  bare?: boolean;
 };
 
 export default function NewsEditor(props: Props) {
@@ -134,6 +136,8 @@ export default function NewsEditor(props: Props) {
         }
       />
 
+      {!props.bare && (
+        <>
       {/* ===== SEO CHECK ===== */}
       <div className="mt-4 text-xs space-y-1">
         {!analysis.hasH2 && (
@@ -170,6 +174,8 @@ export default function NewsEditor(props: Props) {
         <p>• Tránh style inline</p>
         <p>• Nên có list + ảnh</p>
       </div>
+        </>
+      )}
     </div>
   );
 }

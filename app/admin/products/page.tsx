@@ -10,12 +10,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Sản phẩm" };
 
-type SearchParams = { q?: string; page?: string; cat?: string; status?: string };
+type SearchParams = { q?: string; page?: string; cat?: string; status?: string; missing?: string };
 
 const PER_PAGE = 20;
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const { q = "", page = "1", cat = "", status = "" } = await searchParams;
+  const { q = "", page = "1", cat = "", status = "", missing = "" } = await searchParams;
   const current = Math.max(1, Number(page) || 1);
 
   // Điều kiện tìm kiếm + danh mục (dùng chung cho đếm số ở các tab)
@@ -27,6 +27,14 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       { sku: { contains: q, mode: "insensitive" } },
     ];
   }
+  // Lọc sản phẩm còn thiếu thông tin (link từ Bảng điều khiển)
+  const MISSING: Record<string, { field: string; label: string }> = {
+    image: { field: "coverImage", label: "chưa có ảnh đại diện" },
+    short: { field: "short", label: "chưa có mô tả ngắn" },
+    seo: { field: "metaDescription", label: "chưa có mô tả SEO" },
+  };
+  const miss = MISSING[missing];
+  if (miss) base.AND = [{ OR: [{ [miss.field]: null }, { [miss.field]: "" }] }];
   if (cat === "none") base.categoryId = null;
   else if (Number(cat)) base.categoryId = Number(cat);
 
@@ -74,6 +82,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     const sp = new URLSearchParams();
     if (q) sp.set("q", q);
     if (cat) sp.set("cat", cat);
+    if (miss) sp.set("missing", missing);
     if (key) sp.set("status", key);
     return `/admin/products${sp.toString() ? `?${sp}` : ""}`;
   };
@@ -114,6 +123,17 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         })}
       </div>
 
+      {miss && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+          <span>
+            Đang lọc: sản phẩm <strong>{miss.label}</strong>
+          </span>
+          <Link href="/admin/products" className="font-medium hover:underline">
+            Bỏ lọc
+          </Link>
+        </div>
+      )}
+
       <ListToolbar
         searchPlaceholder="Tìm tên, mã SKU, slug…"
         selects={[
@@ -146,7 +166,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             ? `Hiển thị ${(current - 1) * PER_PAGE + 1}–${Math.min(current * PER_PAGE, total)} / ${total}`
             : ""}
         </p>
-        <Pagination basePath="/admin/products" params={{ q, cat, status }} page={current} pages={pages} />
+        <Pagination basePath="/admin/products" params={{ q, cat, status, missing }} page={current} pages={pages} />
       </div>
     </div>
   );
