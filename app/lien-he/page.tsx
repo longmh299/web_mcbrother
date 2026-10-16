@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import FbMessengerChat from "@/components/FbMessengerChat";
+import { trackLead } from "@/lib/track";
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false);
@@ -35,6 +36,7 @@ export default function ContactPage() {
 
       if (json?.ok) {
         setOk(true);
+        trackLead("form", data.subject || "Form liên hệ");
         f.reset();
       } else {
         setOk(false);

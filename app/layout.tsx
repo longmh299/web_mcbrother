@@ -10,6 +10,7 @@ import GoogleAnalytics from "@/components/Googleanalytics";
 import { SITE_URL, SITE } from "@/lib/site";
 import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 import PublicOnly from "@/components/PublicOnly";
+import ClickTracker from "@/components/ClickTracker";
 
 export const metadata: Metadata = {
   // Gốc để Next tự đổi đường dẫn tương đối (ảnh OG, canonical) thành URL đầy đủ
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Trang /admin: ẩn header, footer, nút gọi, Zalo, GA của website */}
         <PublicOnly>
           <GoogleAnalytics />
+          <ClickTracker />
           <HeaderShell />
         </PublicOnly>
 

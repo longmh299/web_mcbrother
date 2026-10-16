@@ -4,7 +4,7 @@ import {
   AlertTriangle,
   ArrowRight,
   FileText,
-  FolderTree,
+  BarChart3,
   Inbox,
   Newspaper,
   Package,
@@ -38,6 +38,7 @@ export default async function AdminHome() {
     latestContacts,
     recentProducts,
     recentPosts,
+    leads7,
   ] = await Promise.all([
     safe(prisma.product.count(), 0),
     safe(prisma.product.count({ where: live }), 0),
@@ -67,6 +68,7 @@ export default async function AdminHome() {
       prisma.post.findMany({ orderBy: { updatedAt: "desc" }, take: 5, select: { id: true, title: true, updatedAt: true, published: true } }),
       [] as any[]
     ),
+    safe(prisma.clickEvent.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 86400e3) } } }), 0),
   ]);
 
   const stats = [
@@ -79,7 +81,7 @@ export default async function AdminHome() {
       tone: newContacts ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600",
     },
     { href: "/admin/products", label: "Sản phẩm", value: prodTotal, sub: `${prodLive} đang hiển thị`, icon: Package, tone: "bg-blue-50 text-blue-600" },
-    { href: "/admin/categories", label: "Danh mục SP", value: catTotal, sub: "Quản lý danh mục", icon: FolderTree, tone: "bg-cyan-50 text-cyan-700" },
+    { href: "/admin/thong-ke?d=7", label: "Lượt bấm liên hệ", value: leads7, sub: "Gọi, Zalo, báo giá… trong 7 ngày", icon: BarChart3, tone: "bg-cyan-50 text-cyan-700" },
     { href: "/admin/news", label: "Bài viết", value: postTotal, sub: postDraft ? `${postDraft} bản nháp` : "Không có bản nháp", icon: Newspaper, tone: "bg-amber-50 text-amber-600" },
   ];
 
@@ -126,7 +128,7 @@ export default async function AdminHome() {
         })}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] [&>*]:min-w-0">
         {/* Liên hệ mới */}
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <header className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
@@ -187,7 +189,7 @@ export default async function AdminHome() {
       </div>
 
       {/* Sửa gần đây */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         {[
           { title: "Sản phẩm sửa gần đây", rows: recentProducts.map((p: any) => ({ id: p.id, name: p.name, at: p.updatedAt, live: p.published, href: `/admin/products/${p.id}/edit` })) },
           { title: "Bài viết sửa gần đây", rows: recentPosts.map((p: any) => ({ id: p.id, name: p.title, at: p.updatedAt, live: p.published, href: `/admin/news/${p.id}/edit` })) },

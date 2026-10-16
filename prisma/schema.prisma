@@ -177,3 +177,19 @@ enum EntityType {
   category
   postCategory
 }
+/// Lượt khách bấm Gọi / Zalo / Messenger / Email / Báo giá / Gửi form trên website
+model ClickEvent {
+  id        Int      @id @default(autoincrement())
+  /// call | zalo | messenger | email | quote | form
+  type      String   @db.VarChar(20)
+  /// Trang khách đang xem khi bấm, VD: /san-pham/may-hut-chan-khong-dz-400
+  page      String   @db.VarChar(300)
+  /// Nút nào được bấm (chữ trên nút), để biết vị trí nút hiệu quả
+  label     String?  @db.VarChar(120)
+  /// mobile | desktop
+  device    String?  @db.VarChar(10)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+}
