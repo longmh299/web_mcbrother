@@ -26,6 +26,15 @@ function safeAttribs(attribs: Record<string, any> = {}) {
   );
 }
 
+// Link nội bộ (cùng site) → giữ dofollow để truyền SEO cho trang sản phẩm/bài viết.
+// Link ra ngoài → nofollow.
+function isInternalHref(href?: string) {
+  if (!href) return false;
+  if (href.startsWith('#')) return true;
+  if (href.startsWith('/') && !href.startsWith('//')) return true;
+  return /^https?:\/\/(www\.)?mcbrother\.(com\.vn|net)(\/|$|\?|#)/i.test(href);
+}
+
 // ảnh: loại thêm width/height gốc (thường do TinyMCE/paste chèn kèm)
 // để tránh ảnh bị "khóa" chiều cao theo pixel gốc, gây phình layout
 function safeImgAttribs(attribs: Record<string, any> = {}) {
@@ -101,7 +110,11 @@ export default function ContentRenderer({ html }: Props) {
         return (
           <a
             {...safeAttribs(node.attribs)}
-            rel="nofollow noopener"
+            rel={
+              isInternalHref(node.attribs?.href)
+                ? undefined
+                : 'nofollow noopener noreferrer'
+            }
             className="
               text-blue-600
               underline

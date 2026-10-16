@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth';
+import { recordSlugChange } from '@/lib/slug-redirect';
 // Helpers
 const asString = (v: FormDataEntryValue | null) => (v ?? '').toString().trim();
 const asBool = (v: FormDataEntryValue | null) =>
@@ -81,8 +82,15 @@ export async function updateCategory(formData: FormData) {
     nofollow: asBool(formData.get('nofollow')),
   };
 
+  const old = await prisma.category.findUnique({ where: { id }, select: { slug: true } });
+  if (!old) throw new Error('Không tìm thấy danh mục');
+
   await prisma.category.update({ where: { id }, data });
+  await recordSlugChange('category', old.slug, slug);
+
   revalidatePath('/admin/categories');
+  revalidatePath(`/${slug}`);
+  if (old.slug !== slug) revalidatePath(`/${old.slug}`);
   redirect('/admin/categories');
 }
 

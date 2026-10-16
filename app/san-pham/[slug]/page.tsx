@@ -8,6 +8,8 @@ import { ShieldCheck, Truck, BadgeCheck } from "lucide-react";
 import { cache } from "react";
 import ProductMedia from "@/components/ProductMedia";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { notFound, permanentRedirect } from "next/navigation";
+import { findRedirect } from "@/lib/slug-redirect";
 /* ===================== CONFIG ===================== */
 // ĐỔI SANG ZALO CỦA BẠN
 const ZALO_URL = 'https://zalo.me/0834551888';
@@ -176,9 +178,13 @@ export default async function ProductDetailPage(
 
   const p = await getProduct(slug);
 
-  if (!p || !p.published) {
-    return <div>Không tìm thấy sản phẩm</div>;
+  if (!p) {
+    // Slug cũ (đã đổi tên) → chuyển 308 sang slug mới; không có → 404 thật
+    const to = await findRedirect('product', slug);
+    if (to) permanentRedirect(`/san-pham/${to}`);
+    notFound();
   }
+  if (!p.published) notFound();
 
   // 🔥 TYPE SAFE
   const specTable = p.specTable as SpecTable | null;

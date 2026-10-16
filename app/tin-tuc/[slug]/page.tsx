@@ -2,7 +2,8 @@ import ContentRenderer from '@/components/news/ContentRenderer';
 import { prisma } from '@/lib/prisma';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
+import { findRedirect } from '@/lib/slug-redirect';
 import { decode } from 'he';
 import { ImageOff } from 'lucide-react';
 import { abs } from '@/lib/site';
@@ -172,7 +173,13 @@ export default async function NewsDetailPage({
   const { slug } = await params;
 
   const post = await getPost(slug);
-  if (!post || !post.published) notFound();
+  if (!post) {
+    // Slug cũ (đã đổi tên) → chuyển 308 sang slug mới; không có → 404
+    const to = slug ? await findRedirect('post', slug) : null;
+    if (to) permanentRedirect(`/tin-tuc/${to}`);
+    notFound();
+  }
+  if (!post.published) notFound();
 
   let content = post.content || '';
 

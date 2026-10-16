@@ -45,10 +45,10 @@ async function searchProducts(q: string, page: number, take: number) {
   const where: any = { published: true };
   if (q) {
     where.OR = [
-      { name: { contains: q } },
-      { short: { contains: q } },
-      { sku: { contains: q } },
-      ...(qSlug ? [{ slug: { contains: qSlug } }] : []),
+      { name: { contains: q, mode: "insensitive" } },
+      { short: { contains: q, mode: "insensitive" } },
+      { sku: { contains: q, mode: "insensitive" } },
+      ...(qSlug ? [{ slug: { contains: qSlug, mode: "insensitive" } }] : []),
     ];
   }
   const [count, items] = await Promise.all([
@@ -76,10 +76,10 @@ async function searchPosts(q: string, page: number, take: number) {
   const where: any = { published: true }; // theo schema bạn có field published:Boolean
   if (q) {
     where.OR = [
-      { title:   { contains: q } },      // KHÔNG dùng mode
-      { excerpt: { contains: q } },
-      { content: { contains: q } },
-      ...(qSlug ? [{ slug: { contains: qSlug } }] : []),
+      { title:   { contains: q, mode: "insensitive" } },      // không phân biệt hoa/thường
+      { excerpt: { contains: q, mode: "insensitive" } },
+      { content: { contains: q, mode: "insensitive" } },
+      ...(qSlug ? [{ slug: { contains: qSlug, mode: "insensitive" } }] : []),
     ];
   }
 

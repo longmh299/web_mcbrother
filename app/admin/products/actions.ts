@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth';
+import { recordSlugChange } from '@/lib/slug-redirect';
 function asString(v: FormDataEntryValue | null) {
   return (v ?? '').toString().trim();
 }
@@ -224,6 +225,10 @@ export async function updateProduct(formData: FormData) {
     faqs,
   };
 
+  // Lấy slug cũ để tạo redirect nếu slug bị đổi
+  const old = await prisma.product.findUnique({ where: { id }, select: { slug: true } });
+  if (!old) throw new Error('Không tìm thấy sản phẩm');
+
   await prisma.product.update({
     where: { id },
     data: {
@@ -249,15 +254,32 @@ export async function updateProduct(formData: FormData) {
     },
   });
 
+  await recordSlugChange('product', old.slug, slug);
+
   revalidatePath('/admin/products');
+  revalidatePath(`/san-pham/${slug}`);
+  if (old.slug !== slug) revalidatePath(`/san-pham/${old.slug}`);
   redirect('/admin/products');
+}
+
+/**
+ * Xoá sản phẩm kèm ảnh thư viện + thông số.
+ * DB đang để khoá ngoại ON DELETE RESTRICT → phải xoá bảng con trước, nếu không sẽ lỗi.
+ */
+async function deleteProductsWithChildren(ids: number[]) {
+  if (!ids.length) return;
+  await prisma.$transaction([
+    prisma.productImage.deleteMany({ where: { productId: { in: ids } } }),
+    prisma.productAttribute.deleteMany({ where: { productId: { in: ids } } }),
+    prisma.product.deleteMany({ where: { id: { in: ids } } }),
+  ]);
 }
 
 export async function deleteProduct(formData: FormData) {
     await requireAdmin();    
   const id = asInt(formData.get('id'));
   if (!id) throw new Error('Thiếu id');
-  await prisma.product.delete({ where: { id } });
+  await deleteProductsWithChildren([id]);
   revalidatePath('/admin/products');
 }
 
@@ -272,7 +294,7 @@ export async function bulkProductOp(formData: FormData) {
   else if (op === 'unpublish') await prisma.product.updateMany({ where: { id: { in: ids } }, data: { published: false } });
   else if (op === 'feature') await prisma.product.updateMany({ where: { id: { in: ids } }, data: { isFeatured: true } });
   else if (op === 'unfeature') await prisma.product.updateMany({ where: { id: { in: ids } }, data: { isFeatured: false } });
-  else if (op === 'delete') await prisma.product.deleteMany({ where: { id: { in: ids } } });
+  else if (op === 'delete') await deleteProductsWithChildren(ids);
 
   revalidatePath('/admin/products');
 }

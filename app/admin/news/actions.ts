@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import sanitizeHtml from "sanitize-html";
 import { requireAdmin } from '@/lib/auth';
+import { recordSlugChange } from "@/lib/slug-redirect";
 /* ================= HELPERS ================= */
 
 function toSlug(s: string) {
@@ -130,6 +131,9 @@ export async function updatePost(fd: FormData) {
       finalSlug = `${slug}-${i++}`;
     }
 
+    const old = await prisma.post.findUnique({ where: { id }, select: { slug: true } });
+    if (!old) throw new Error("Không tìm thấy bài viết");
+
     await prisma.post.update({
       where: { id },
       data: {
@@ -150,8 +154,11 @@ export async function updatePost(fd: FormData) {
       },
     });
 
+    await recordSlugChange("post", old.slug, finalSlug);
+
     revalidatePath("/admin/news");
     revalidatePath(`/tin-tuc/${finalSlug}`);
+    if (old.slug !== finalSlug) revalidatePath(`/tin-tuc/${old.slug}`);
   } catch (e: any) {
     redirectTarget = `/admin/news?err=${encodeURIComponent(e.message)}`;
   }
@@ -169,7 +176,6 @@ export async function deletePost(fd: FormData) {
   if (!Number.isFinite(id)) throw new Error("ID không hợp lệ");
 
   let redirectTarget = "/admin/news?ok=1";
-  await requireAdmin();
   try {
     await prisma.post.delete({ where: { id } });
     revalidatePath("/admin/news");
