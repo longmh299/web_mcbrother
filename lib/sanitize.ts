@@ -3,36 +3,9 @@
 // Giữ định dạng của editor (bảng, ảnh, link, style inline…), bỏ <script>, onerror=, javascript:…
 import DOMPurify from "isomorphic-dompurify";
 
-/** Chỉ cho iframe nhúng video từ các nguồn tin cậy. */
-const IFRAME_HOSTS = [
-  "www.youtube.com",
-  "youtube.com",
-  "www.youtube-nocookie.com",
-  "player.vimeo.com",
-  "www.facebook.com",
-  "player.cloudinary.com",
-];
+import { isAllowedEmbed, isHttpUrl } from "./url";
 
-export function isAllowedEmbed(src: string | null | undefined) {
-  if (!src) return false;
-  try {
-    const u = new URL(src);
-    return u.protocol === "https:" && IFRAME_HOSTS.includes(u.hostname);
-  } catch {
-    return false;
-  }
-}
-
-/** URL an toàn cho src/href: chỉ http(s). */
-export function isHttpUrl(src: string | null | undefined) {
-  if (!src) return false;
-  try {
-    const u = new URL(src);
-    return u.protocol === "https:" || u.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
+export { isAllowedEmbed, isHttpUrl };
 
 let hooked = false;
 function setupHooks() {

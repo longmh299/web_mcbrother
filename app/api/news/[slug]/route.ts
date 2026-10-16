@@ -4,8 +4,10 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-export async function GET(req: Request, context: any) {
-  const slug = String(context?.params?.slug || "");
+export async function GET(req: Request, context: { params: Promise<{ slug: string }> }) {
+  // Next 15+: params là Promise
+  const { slug: rawSlug } = await context.params;
+  const slug = String(rawSlug || "");
 
   const p = await prisma.post.findUnique({
     where: { slug },

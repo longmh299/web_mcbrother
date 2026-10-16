@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ImageIcon, PlayCircle } from "lucide-react";
 import WatermarkImage from "./WatermarkImage";
+import { isAllowedEmbed, isHttpUrl } from "@/lib/url";
 
 type GalleryImage = { url: string; alt?: string | null };
 
@@ -41,18 +42,22 @@ export default function ProductMedia({
   const active =
     gallery.find((g) => g.url === activeUrl) || gallery[0] || null;
 
-  const hasVideo = Boolean(videoUrl);
+  // Chỉ nhận link http(s); chặn "javascript:..." do nhập nhầm/cố ý ở admin
+  const safeVideoUrl = isHttpUrl(videoUrl) ? videoUrl! : null;
+  const hasVideo = Boolean(safeVideoUrl);
 
   const isShort =
-    videoUrl?.includes("shorts") ||
-    videoUrl?.includes("tiktok") ||
-    videoUrl?.includes("reel");
+    safeVideoUrl?.includes("shorts") ||
+    safeVideoUrl?.includes("tiktok") ||
+    safeVideoUrl?.includes("reel");
 
-  const isVideoFile = videoUrl ? /\.(mp4|webm|ogg)$/i.test(videoUrl) : false;
+  const isVideoFile = safeVideoUrl ? /\.(mp4|webm|ogg)$/i.test(safeVideoUrl) : false;
 
-  const embedUrl = videoUrl
-    ? videoUrl.replace("youtu.be/", "youtube.com/embed/").replace("shorts/", "embed/")
+  const embedUrl = safeVideoUrl
+    ? safeVideoUrl.replace("youtu.be/", "youtube.com/embed/").replace("shorts/", "embed/")
     : "";
+  // Chỉ nhúng iframe từ nguồn tin cậy (YouTube, Vimeo, Facebook…); nguồn khác hiện thành link
+  const canEmbed = isAllowedEmbed(embedUrl);
 
   return (
     <div className="space-y-3">
@@ -113,16 +118,25 @@ export default function ProductMedia({
             >
               {isVideoFile ? (
                 <video
-                  src={videoUrl!}
+                  src={safeVideoUrl!}
                   controls
                   className="absolute inset-0 w-full h-full object-contain"
                 />
-              ) : (
+              ) : canEmbed ? (
                 <iframe
                   src={embedUrl}
                   className="absolute inset-0 w-full h-full"
                   allowFullScreen
                 />
+              ) : (
+                <a
+                  href={safeVideoUrl!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute inset-0 flex items-center justify-center text-white underline"
+                >
+                  Xem video vận hành
+                </a>
               )}
             </div>
           )}

@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 import { ShieldCheck, Truck, BadgeCheck } from "lucide-react";
 import { cache } from "react";
 import ProductMedia from "@/components/ProductMedia";
+import { sanitizeHtml } from "@/lib/sanitize";
 /* ===================== CONFIG ===================== */
 // ĐỔI SANG ZALO CỦA BẠN
 const ZALO_URL = 'https://zalo.me/0834551888';
@@ -202,8 +203,9 @@ export default async function ProductDetailPage(
 
   // 🔥 description xử lý
   const rawDescHtml = decodeHtmlEntities(p.description);
+    // Lọc XSS SAU khi decode (decode có thể biến &lt;script&gt; thành <script> thật)
   const descHtml = rawDescHtml
-    ? normalizeDescHeadings(rawDescHtml)
+    ? normalizeDescHeadings(sanitizeHtml(rawDescHtml))
     : '';
 
   const mainImg = cld(p.coverImage, 900, 600);

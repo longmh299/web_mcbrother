@@ -3,7 +3,7 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        // Bắt mọi request vào www.mcbrother.id.vn
+        // Bắt mọi request vào www.mcbrother.com.vn
         source: '/:path*',
         has: [
           {
@@ -19,12 +19,12 @@ const nextConfig = {
   },
 
   images: {
-    domains: ["mcbrother.net"],
+    // Chỉ tối ưu ảnh từ các nguồn tin cậy (không dùng hostname '*').
+    // Nếu terminal báo: hostname "abc.com" is not configured → thêm 1 dòng cho domain đó.
     remotePatterns: [
-      { protocol: 'https', hostname: '*' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
-      { protocol: 'https', hostname: 'mcbrother.net', pathname: '/upload/**' }, // nếu vẫn dùng ảnh ở đây
-      
+      { protocol: 'https', hostname: 'mcbrother.net' },
+      { protocol: 'https', hostname: 'mcbrother.com.vn' },
     ],
   },
 };
