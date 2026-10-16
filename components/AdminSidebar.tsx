@@ -9,6 +9,7 @@ import {
   FolderTree,
   Newspaper,
   Tags,
+  Inbox,
   ExternalLink,
   LogOut,
   Menu,
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/admin/categories", label: "Danh mục SP", icon: FolderTree },
   { href: "/admin/news", label: "Tin tức", icon: Newspaper },
   { href: "/admin/news-categories", label: "Chuyên mục tin tức", icon: Tags },
+  { href: "/admin/lien-he", label: "Liên hệ khách hàng", icon: Inbox, badgeKey: "contacts" as const },
 ];
 
 function isActive(pathname: string | null, href: string, exact?: boolean) {
@@ -29,7 +31,7 @@ function isActive(pathname: string | null, href: string, exact?: boolean) {
   return exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 }
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({ onNavigate, newContacts = 0 }: { onNavigate?: () => void; newContacts?: number }) {
   const pathname = usePathname();
 
   return (
@@ -49,7 +51,12 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             }`}
           >
             <Icon size={18} className={active ? "text-blue-600" : "text-slate-400"} />
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {"badgeKey" in item && newContacts > 0 && (
+              <span className="rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                {newContacts > 99 ? "99+" : newContacts}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -104,7 +111,7 @@ function Brand({ onClose }: { onClose?: () => void }) {
   );
 }
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ newContacts = 0 }: { newContacts?: number }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -112,7 +119,7 @@ export default function AdminSidebar() {
       {/* ===== DESKTOP: sidebar cố định bên trái ===== */}
       <aside className="hidden md:flex md:flex-col w-64 shrink-0 border-r border-slate-200 bg-white sticky top-0 h-dvh">
         <Brand />
-        <NavLinks />
+        <NavLinks newContacts={newContacts} />
         <SidebarFooter />
       </aside>
 
@@ -129,7 +136,12 @@ export default function AdminSidebar() {
           className="p-2 rounded-lg hover:bg-slate-100"
           aria-label="Mở menu"
         >
-          <Menu size={20} />
+          <span className="relative inline-flex">
+            <Menu size={20} />
+            {newContacts > 0 && (
+              <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500" />
+            )}
+          </span>
         </button>
       </div>
 
@@ -141,7 +153,7 @@ export default function AdminSidebar() {
           />
           <div className="absolute left-0 top-0 h-full w-72 max-w-[80vw] bg-white flex flex-col shadow-xl">
             <Brand onClose={() => setOpen(false)} />
-            <NavLinks onNavigate={() => setOpen(false)} />
+            <NavLinks onNavigate={() => setOpen(false)} newContacts={newContacts} />
             <SidebarFooter />
           </div>
         </div>

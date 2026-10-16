@@ -1,12 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
-
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -28,8 +27,8 @@ model Category {
   parent          Category?  @relation("CategoryToChildren", fields: [parentId], references: [id])
   children        Category[] @relation("CategoryToChildren")
   products        Product[]
-  isFeatured Boolean @default(false)
-  
+  isFeatured      Boolean    @default(false)
+
   @@index([parentId])
   @@index([name])
 }
@@ -40,7 +39,7 @@ model Product {
   name            String
   short           String?
   description     String?
-  specTable    Json?    // nullable
+  specTable       Json? // nullable
   sku             String?            @unique
   price           Int?
   isFeatured      Boolean            @default(false)
@@ -61,17 +60,17 @@ model Product {
   power           String?
   voltage         String?
   weight          String?
-  warranty        String? 
+  warranty        String?
   highlights      String[]           @default([])
   videoUrl        String?
   category        Category?          @relation(fields: [categoryId], references: [id])
   attributes      ProductAttribute[]
   images          ProductImage[]
-  faqs Json?
+  faqs            Json?
+
   @@index([categoryId])
   @@index([name])
   @@index([categoryId, createdAt])
-  
 }
 
 model ProductImage {
@@ -164,6 +163,12 @@ model ContactMessage {
   ip        String?
   useragent String?
   page      String?
+  /// "new" = mới, "done" = đã xử lý
+  status    String   @default("new") @db.VarChar(20)
+  /// Ghi chú nội bộ của nhân viên (đã gọi lại, đã báo giá…)
+  note      String?
+
+  @@index([status, createdat])
 }
 
 enum EntityType {

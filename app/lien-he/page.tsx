@@ -14,23 +14,38 @@ export default function ContactPage() {
     setLoading(true); setOk(null); setErr(null);
 
     const f = e.currentTarget;
-    const data = Object.fromEntries(new FormData(f).entries());
+    const data = Object.fromEntries(new FormData(f).entries()) as Record<string, string>;
 
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    const json = await res.json().catch(() => ({}));
-    setLoading(false);
-
-    if (json?.ok) {
-      setOk(true);
-      f.reset();
-    } else {
+    // Cần ít nhất SĐT hoặc email để liên hệ lại
+    if (!data.phone?.trim() && !data.email?.trim()) {
+      setLoading(false);
       setOk(false);
-      setErr(json?.error || "Gửi thất bại. Vui lòng thử lại.");
+      setErr("Vui lòng nhập số điện thoại hoặc email để chúng tôi liên hệ lại.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, page: "/lien-he" }),
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (json?.ok) {
+        setOk(true);
+        f.reset();
+      } else {
+        setOk(false);
+        setErr(json?.error || "Gửi thất bại. Vui lòng thử lại hoặc gọi 0834 551 888.");
+      }
+    } catch {
+      // Mất mạng / lỗi kết nối → không để nút kẹt ở "Đang gửi..."
+      setOk(false);
+      setErr("Không gửi được do lỗi kết nối. Vui lòng thử lại hoặc gọi 0834 551 888.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -72,7 +87,7 @@ export default function ContactPage() {
                 <li>
                   Email:{" "}
                   <a
-                    href="mailto:contact@mcbrother.net"
+                    href="mailto:mcbrother2013@gmail.com"
                     className="text-[var(--color-primary)] hover:underline"
                   >
                     mcbrother2013@gmail.com
@@ -117,11 +132,13 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-700">Email *</label>
+                  <label className="block text-sm text-gray-700">Số điện thoại *</label>
                   <input
-                    type="email"
-                    name="email"
-                    required
+                    type="tel"
+                    name="phone"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="VD: 0834 551 888"
                     className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-[var(--color-primary)] outline-none"
                   />
                 </div>
@@ -129,9 +146,11 @@ export default function ContactPage() {
 
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-gray-700">Số điện thoại</label>
+                  <label className="block text-sm text-gray-700">Email</label>
                   <input
-                    name="phone"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
                     className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-[var(--color-primary)] outline-none"
                   />
                 </div>
@@ -144,6 +163,10 @@ export default function ContactPage() {
                   />
                 </div>
               </div>
+
+              <p className="-mt-1 text-xs text-gray-500">
+                * Chỉ cần số điện thoại <strong>hoặc</strong> email để chúng tôi liên hệ lại.
+              </p>
 
               <input name="website" className="hidden" tabIndex={-1} autoComplete="off" />
 

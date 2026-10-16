@@ -13,6 +13,9 @@ type Props = {
   watermarkSize?: number;      // px, mặc định 40
   position?: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "center";
   opacity?: number;            // 0 -> 1, mặc định 0.55
+  /** "lazy" (mặc định): chỉ tải khi sắp cuộn tới. Ảnh chính đầu trang nên dùng "eager". */
+  loading?: "lazy" | "eager";
+  sizes?: string;
 };
 
 const posClass: Record<NonNullable<Props["position"]>, string> = {
@@ -36,10 +39,13 @@ export default function WatermarkImage({
   className = "",
   wrapperClassName = "",
   onClick,
-  watermarkSrc = "/images/logo.png",
+  // logo-wm.png: bản thu nhỏ ~128px (logo.png gốc 215KB quá nặng cho watermark 40px)
+  watermarkSrc = "/images/logo-wm.png",
   watermarkSize = 40,
   position = "bottom-right",
   opacity = 0.55,
+  loading = "lazy",
+  sizes,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -60,7 +66,10 @@ export default function WatermarkImage({
       <img
         src={src}
         srcSet={srcSet}
+        sizes={srcSet ? sizes : undefined}
         alt={alt}
+        loading={loading}
+        decoding="async"
         draggable={false}
         onContextMenu={block}
         onDragStart={block}
@@ -80,6 +89,7 @@ export default function WatermarkImage({
       <img
         src={watermarkSrc}
         alt=""
+        loading="lazy"
         draggable={false}
         aria-hidden
         className={`absolute pointer-events-none select-none drop-shadow-md ${posClass[position]}`}

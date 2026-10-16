@@ -105,6 +105,8 @@ export default function ProductMedia({
                 className="max-w-full max-h-full object-contain"
                 watermarkSize={56}
                 position="bottom-right"
+                loading="eager"
+                sizes="(min-width: 1024px) 600px, 100vw"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">

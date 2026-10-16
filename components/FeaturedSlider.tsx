@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import WatermarkImage from "./WatermarkImage";
+import { cld } from "@/lib/cloudinary";
 
 export type Item = {
   id: number;
@@ -45,7 +46,7 @@ function ProductSlide({ p }: { p: Item }) {
         <div className="aspect-[4/3] bg-white flex items-center justify-center overflow-hidden">
           {p.coverImage ? (
             <WatermarkImage
-              src={p.coverImage}
+              src={cld(p.coverImage, 480) ?? p.coverImage}
               alt={p.name}
               wrapperClassName="w-full h-full flex items-center justify-center"
               className="w-full h-full object-contain p-3 transition duration-300 group-hover:scale-105"

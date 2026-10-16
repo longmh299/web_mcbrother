@@ -226,7 +226,8 @@ export default function AboutPage() {
           <div className="lg:sticky lg:top-24">
             <div className="relative overflow-hidden rounded-2xl border border-gray-100 shadow-xl bg-white">
               <img
-                src="https://res.cloudinary.com/ds55hfvx4/image/upload/v1778229923/ChatGPT_Image_15_45_05_8_thg_5_2026_gvhmuh.png"
+                src="https://res.cloudinary.com/ds55hfvx4/image/upload/f_auto,q_auto,c_limit,w_900/v1778229923/ChatGPT_Image_15_45_05_8_thg_5_2026_gvhmuh.png"
+                loading="lazy"
                 alt="MCBROTHER JSC – máy chế biến và đóng gói thực phẩm"
                 className="w-full h-auto object-contain"
               />

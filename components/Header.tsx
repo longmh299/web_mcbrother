@@ -70,11 +70,10 @@ export default function Header({ categories = [] }: { categories: Cat[] }) {
                 <div key={item.href} className="relative group">
                   <Link
                     href="/san-pham"
-                    className={`px-2 py-2 transition ${
-                      active
+                    className={`px-2 py-2 transition ${active
                         ? "text-[var(--color-primary)]"
                         : "text-slate-700 hover:text-[var(--color-primary)]"
-                    }`}
+                      }`}
                   >
                     {item.label}
                   </Link>
@@ -96,10 +95,9 @@ export default function Header({ categories = [] }: { categories: Cat[] }) {
                               key={c.id}
                               onMouseEnter={() => setActiveTab(c.id)}
                               className={`px-4 py-3 text-sm cursor-pointer flex items-center gap-2 transition
-                                ${
-                                  activeTab === c.id
-                                    ? "bg-white font-medium text-[var(--color-primary)] border-l-2 border-[var(--color-primary)]"
-                                    : "hover:bg-gray-100 text-gray-700"
+                                ${activeTab === c.id
+                                  ? "bg-white font-medium text-[var(--color-primary)] border-l-2 border-[var(--color-primary)]"
+                                  : "hover:bg-gray-100 text-gray-700"
                                 }`}
                             >
                               {c.name}
@@ -119,41 +117,42 @@ export default function Header({ categories = [] }: { categories: Cat[] }) {
                               </Link>
 
                               <div className="grid grid-cols-6 gap-6">
-  {sub.children?.map((child) => (
-    <Link
-      key={child.id}
-      href={`/${child.slug}`}
-      className="text-center group"
-    >
-      {/* IMAGE */}
-      <div
-        className="relative w-36 h-36 mx-auto rounded-full overflow-hidden 
+                                {sub.children?.map((child) => (
+                                  <Link
+                                    key={child.id}
+                                    href={`/${child.slug}`}
+                                    className="text-center group"
+                                  >
+                                    {/* IMAGE */}
+                                    <div
+                                      className="relative w-36 h-36 mx-auto rounded-full overflow-hidden 
         border-2 border-[var(--color-primary)] bg-white
         shadow-sm transition-all duration-300 ease-out
 
         hover:border-[var(--color-accent)]
         hover:scale-105
         hover:shadow-[0_10px_25px_rgba(0,0,0,0.15)]"
-      >
-        <Image
-          src={child.ogImage || "/images/no-image.jpg"}
-          alt={child.name}
-          fill
-          className="object-cover"
-        />
-      </div>
+                                    >
+                                      <Image
+                                        src={child.ogImage || "/images/no-image.jpg"}
+                                        alt={child.name}
+                                        fill
+                                        sizes="144px"
+                                        className="object-cover"
+                                      />
+                                    </div>
 
-      {/* TEXT */}
-      <div
-        className="text-sm mt-3 text-gray-700 line-clamp-2
+                                    {/* TEXT */}
+                                    <div
+                                      className="text-sm mt-3 text-gray-700 line-clamp-2
         transition-colors duration-300
         hover:text-[var(--color-accent)]"
-      >
-        {child.name}
-      </div>
-    </Link>
-  ))}
-</div>
+                                    >
+                                      {child.name}
+                                    </div>
+                                  </Link>
+                                ))}
+                              </div>
 
                             </div>
                           ))}
@@ -170,11 +169,10 @@ export default function Header({ categories = [] }: { categories: Cat[] }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-2 py-2 transition ${
-                  active
+                className={`px-2 py-2 transition ${active
                     ? "text-[var(--color-primary)]"
                     : "text-slate-700 hover:text-[var(--color-primary)]"
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>

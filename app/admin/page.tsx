@@ -1,20 +1,29 @@
 // app/admin/page.tsx
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { Package, FolderTree, Newspaper, Tags, Plus } from "lucide-react";
+import { Package, FolderTree, Newspaper, Tags, Plus, Inbox } from "lucide-react";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
-  const [prod, cat, post, postCat] = await Promise.all([
+  const [prod, cat, post, postCat, newContacts] = await Promise.all([
     prisma.product.count().catch(() => 0),
     prisma.category.count().catch(() => 0),
     prisma.post.count().catch(() => 0),
     prisma.postCategory.count().catch(() => 0),
+    prisma.contactMessage.count({ where: { status: "new" } }).catch(() => 0),
   ]);
 
   const stats = [
+    {
+      href: "/admin/lien-he",
+      title: "Liên hệ mới",
+      desc: "Khách gửi từ website, chưa xử lý",
+      count: newContacts,
+      icon: Inbox,
+      color: newContacts > 0 ? "bg-red-50 text-red-600" : "bg-slate-100 text-slate-500",
+    },
     {
       href: "/admin/products",
       title: "Sản phẩm",
@@ -64,7 +73,7 @@ export default async function AdminHome() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {stats.map((s) => {
           const Icon = s.icon;
           return (

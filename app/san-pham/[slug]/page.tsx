@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Check, Settings, Zap } from "lucide-react";
-export const dynamic = 'force-dynamic';
 import { ShieldCheck, Truck, BadgeCheck } from "lucide-react";
 import { cache } from "react";
 import ProductMedia from "@/components/ProductMedia";
@@ -308,7 +307,9 @@ export default async function ProductDetailPage(
       {/* ===== HERO ===== */}
       <section className="relative">
         <img
-          src="https://res.cloudinary.com/ds55hfvx4/image/upload/v1778214441/ChatGPT_Image_11_26_29_8_thg_5_2026_vuknuv.png"
+          src="https://res.cloudinary.com/ds55hfvx4/image/upload/f_auto,q_auto,c_limit,w_1920/v1778214441/ChatGPT_Image_11_26_29_8_thg_5_2026_vuknuv.png"
+          alt=""
+          aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/60" />

@@ -66,7 +66,9 @@ export default async function ProductsPage() {
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden min-h-[340px]">
         <img
-          src="https://res.cloudinary.com/ds55hfvx4/image/upload/v1784716674/banner_may_moc_cong_nghiep_fa8smo.webp"
+          src="https://res.cloudinary.com/ds55hfvx4/image/upload/f_auto,q_auto,c_limit,w_1920/v1784716674/banner_may_moc_cong_nghiep_fa8smo.webp"
+          alt=""
+          aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/55 to-slate-900/20" />

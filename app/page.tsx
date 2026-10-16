@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import TickerBar from "@/components/TickerBar";
 import FeaturedSlider from "@/components/FeaturedSlider";
 import WatermarkImage from "@/components/WatermarkImage";
+import { cld } from "@/lib/cloudinary";
 
 import { cache } from "react";
 import { PhoneCall, Settings, TrendingUp, Truck, Zap } from "lucide-react";
@@ -85,7 +86,6 @@ const getHomepageData = cache(async () => {
   const [
     featured,
     categoriesHome,
-    categories,
     posts,
   ] = await Promise.all([
 
@@ -113,23 +113,6 @@ const getHomepageData = cache(async () => {
         banner: true,
         ogImage: true,
         metaDescription: true,
-      },
-    }),
-
-    prisma.category.findMany({
-      where: { parentId: null },
-      orderBy: { order: "asc" },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        children: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
       },
     }),
 
@@ -172,14 +155,13 @@ const getHomepageData = cache(async () => {
 
   return {
     products,
-    categories,
     categoriesHome,
     posts,
   };
 });
 
 export default async function HomePage() {
-  const { products, categories, categoriesHome, posts } = await getHomepageData();
+  const { products, categoriesHome, posts } = await getHomepageData();
   return (
     <main className="bg-[var(--color-bg)] text-slate-800">
       {/* hero */}
@@ -189,7 +171,7 @@ export default async function HomePage() {
         <div
           className="absolute inset-0 bg-no-repeat"
           style={{
-            backgroundImage: "url('https://res.cloudinary.com/ds55hfvx4/image/upload/v1774489339/hero_banner_u2ziwq.png')",
+            backgroundImage: "url('https://res.cloudinary.com/ds55hfvx4/image/upload/f_auto,q_auto,c_limit,w_1920/v1774489339/hero_banner_u2ziwq.png')",
             backgroundSize: "cover",              // ✅ QUAN TRỌNG
             backgroundPosition: "right bottom",   // ✅ GIỮ MÁY BÊN PHẢI
           }}
@@ -277,7 +259,7 @@ export default async function HomePage() {
                 {/* IMAGE */}
                 <div className="relative h-56 bg-gray-200 overflow-hidden">
                   <WatermarkImage
-                    src={cat.ogImage || cat.banner || "/images/no-image.jpg"}
+                    src={cld(cat.ogImage || cat.banner, 640, 448, "fill") || "/images/no-image.jpg"}
                     alt={`${cat.name} MCBROTHER`}
                     wrapperClassName="w-full h-full"
                     className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
@@ -385,7 +367,8 @@ export default async function HomePage() {
 
             {/* image */}
             <img
-              src="https://res.cloudinary.com/ds55hfvx4/image/upload/v1774664686/banner2_en4elx.jpg"
+              src="https://res.cloudinary.com/ds55hfvx4/image/upload/f_auto,q_auto,c_limit,w_900/v1774664686/banner2_en4elx.jpg"
+              loading="lazy"
               alt="solution"
               className="relative z-10 w-full max-h-[260px] object-cover 
     rounded-2xl shadow-xl"
@@ -429,7 +412,8 @@ export default async function HomePage() {
           <Link href={`/tin-tuc/${post.slug}`}>
             <div className="relative aspect-[16/10] overflow-hidden">
               <img
-                src={post.coverImage || "/images/no-image.jpg"}
+                src={cld(post.coverImage, 640, 400, "fill") || "/images/no-image.jpg"}
+                loading="lazy"
                 alt={post.title}
                 className="h-full w-full object-cover transition duration-500 hover:scale-105"
               />

@@ -9,7 +9,8 @@ import { brandTitle, metaDescription, absImage, breadcrumbJsonLd, ldJson } from 
 import { redirect, notFound } from "next/navigation";
 import Image from "next/image";
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// ISR: cache trang danh mục, làm mới tối đa sau 60 giây
+export const revalidate = 60;
 
 /* ================= SEO ================= */
 export async function generateMetadata(

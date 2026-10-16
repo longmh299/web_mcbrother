@@ -2,8 +2,6 @@
 import { prisma } from "@/lib/prisma";
 import Header from "./Header";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 type Cat = {
   id: number;
@@ -14,15 +12,21 @@ type Cat = {
 
 export default async function HeaderShell() {
 
+  // Chỉ lấy đúng các cột Header dùng (id, name, slug, ogImage) — trước đây lấy toàn bộ cột
+  // (meta, canonical, banner…) của 3 cấp danh mục rồi gửi xuống trình duyệt ở MỌI trang.
+  const base = { id: true, name: true, slug: true, ogImage: true } as const;
   const categories = await prisma.category.findMany({
     where: { parentId: null },
     orderBy: [{ order: "asc" }, { name: "asc" }],
-    include: {
+    select: {
+      ...base,
       children: {
         orderBy: [{ order: "asc" }, { name: "asc" }],
-        include: {
+        select: {
+          ...base,
           children: {
             orderBy: [{ order: "asc" }, { name: "asc" }],
+            select: base,
           },
         },
       },
