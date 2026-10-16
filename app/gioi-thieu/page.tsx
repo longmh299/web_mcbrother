@@ -95,7 +95,8 @@ export default function AboutPage() {
     url: abs("/gioi-thieu"),
     name: `Giới thiệu ${SITE.name}`,
     mainEntity: {
-      "@type": "Organization",
+      "@type": "LocalBusiness",
+      "@id": abs("/#organization"),
       name: SITE.name,
       legalName: SITE.legalName,
       url: abs("/"),

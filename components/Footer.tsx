@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { SITE, abs } from "@/lib/site";
+import { ldJson } from "@/lib/seo";
 
 const socials = [
   {
@@ -60,21 +61,37 @@ async function getFooterCategories() {
 export default async function Footer() {
   const categories = await getFooterCategories();
 
+  // JSON-LD doanh nghiệp địa phương: giúp Google hiển thị thông tin công ty
+  // và xếp hạng tốt hơn cho tìm kiếm theo khu vực ("máy đóng gói Bình Tân / TP.HCM").
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    name: SITE.legalName,
-    alternateName: SITE.name,
+    "@type": "LocalBusiness",
+    "@id": abs("/#organization"),
+    name: SITE.name,
+    legalName: SITE.legalName,
+    alternateName: SITE.legalName,
     url: abs("/"),
     logo: abs("/images/logo.png"),
+    image: abs("/images/og-default.jpg"),
     description: SITE.tagline,
+    foundingDate: "2013-04-10",
+    taxID: SITE.taxCode,
+    telephone: "+84834551888",
+    email: SITE.email,
     address: {
       "@type": "PostalAddress",
-      streetAddress: SITE.address,
+      streetAddress: "33 đường số 5, KDC Vĩnh Lộc, P. Bình Hưng Hòa B",
+      addressLocality: "Bình Tân",
+      addressRegion: "TP. Hồ Chí Minh",
       addressCountry: "VN",
     },
-    telephone: SITE.phone,
-    email: SITE.email,
+    // Toạ độ lấy từ bản đồ Google trên trang /lien-he
+    geo: { "@type": "GeoCoordinates", latitude: 10.80752, longitude: 106.59104 },
+    areaServed: { "@type": "Country", name: "Việt Nam" },
+    // TODO: bổ sung giờ làm việc thật, ví dụ:
+    openingHoursSpecification: [{ "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+      opens: "08:00", closes: "16:30" }],
     sameAs: [SITE.facebookUrl, SITE.youtubeUrl, SITE.tiktokUrl, SITE.zaloUrl],
   };
 
@@ -83,7 +100,7 @@ export default async function Footer() {
       {/* JSON-LD: giúp Google hiểu đây là 1 doanh nghiệp, hỗ trợ rich snippet */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: ldJson(jsonLd) }}
       />
 
       {/* MAIN */}
@@ -117,11 +134,11 @@ export default async function Footer() {
           </div>
 
           {/* BỘ CÔNG THƯƠNG */}
-          <img
+          {/* <img
             src="/images/bo-cong-thuong.png"
             alt="Đã thông báo Bộ Công Thương"
             className="h-12 mt-2"
-          />
+          /> */}
         </div>
 
         {/* DANH MỤC */}

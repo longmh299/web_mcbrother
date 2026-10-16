@@ -219,7 +219,7 @@ export default async function ProductDetailPage(
 
   // 🔥 description xử lý
   const rawDescHtml = decodeHtmlEntities(p.description);
-    // Lọc XSS SAU khi decode (decode có thể biến &lt;script&gt; thành <script> thật)
+  // Lọc XSS SAU khi decode (decode có thể biến &lt;script&gt; thành <script> thật)
   const descHtml = rawDescHtml
     ? normalizeDescHeadings(sanitizeHtml(rawDescHtml))
     : '';
@@ -274,7 +274,7 @@ export default async function ProductDetailPage(
           price: String(p.price),
           availability: 'https://schema.org/InStock',
           url: abs(`/san-pham/${p.slug}`),
-          seller: { '@type': 'Organization', name: 'MCBROTHER JSC' },
+          seller: { '@id': abs('/#organization') },
         }
         : undefined,
     additionalProperty: additionalProps.map((x) => ({
@@ -284,6 +284,21 @@ export default async function ProductDetailPage(
     })),
   };
   // app/san-pham/[slug]/page.tsx
+  // JSON-LD FAQ: từ mục "Câu hỏi thường gặp" của sản phẩm (bỏ câu hỏi/trả lời trống)
+  const faqItems = (Array.isArray(p.faqs) ? (p.faqs as FAQ[]) : []).filter(
+    (f) => f?.question?.trim() && f?.answer?.trim()
+  );
+  const faqLd = faqItems.length
+    ? {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqItems.map((f) => ({
+        '@type': 'Question',
+        name: f.question.trim(),
+        acceptedAnswer: { '@type': 'Answer', text: f.answer.trim() },
+      })),
+    }
+    : null;
   // (GIỮ NGUYÊN TOÀN BỘ IMPORT + HELPER + SEO + QUERY)
   const breadcrumbLd = breadcrumbJsonLd([
     { name: 'Trang chủ', path: '/' },
@@ -303,6 +318,12 @@ export default async function ProductDetailPage(
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd) }}
       />
+      {faqLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: ldJson(faqLd) }}
+        />
+      )}
 
       {/* ===== HERO ===== */}
       <section className="relative">
