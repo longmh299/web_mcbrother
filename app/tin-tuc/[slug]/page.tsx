@@ -7,6 +7,7 @@ import { findRedirect } from '@/lib/slug-redirect';
 import { decode } from 'he';
 import { ImageOff } from 'lucide-react';
 import { abs } from '@/lib/site';
+import { brandTitle, metaDescription, absImage, breadcrumbJsonLd, ldJson } from '@/lib/seo';
 
 export const revalidate = 60;
 
@@ -132,12 +133,12 @@ export async function generateMetadata({
   if (!post) return {};
 
   const title = post.metaTitle || post.title;
-  const description = post.metaDescription || post.excerpt || '';
+  const description = metaDescription(post.metaDescription || post.excerpt || post.content) || '';
   const url = post.canonicalUrl || abs(`/tin-tuc/${post.slug}`);
-  const image = post.ogImage || post.coverImage || abs('/images/placeholder.jpg');
+  const image = absImage(post.ogImage || post.coverImage);
 
   return {
-    title,
+    title: brandTitle(title),
     description,
     alternates: { canonical: url },
     openGraph: {
@@ -194,7 +195,7 @@ export default async function NewsDetailPage({
 
   // 🔥 JSON-LD Article schema cho SEO
   const postUrl = post.canonicalUrl || abs(`/tin-tuc/${post.slug}`);
-  const postImage = post.ogImage || post.coverImage || abs('/images/placeholder.jpg');
+  const postImage = absImage(post.ogImage || post.coverImage);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -228,7 +229,19 @@ export default async function NewsDetailPage({
       {/* 🔥 JSON-LD SEO */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: ldJson(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: ldJson(
+            breadcrumbJsonLd([
+              { name: 'Trang chủ', path: '/' },
+              { name: 'Tin tức', path: '/tin-tuc' },
+              { name: post.title, path: `/tin-tuc/${post.slug}` },
+            ])
+          ),
+        }}
       />
 
       {/* ================= HERO ================= */}

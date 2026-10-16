@@ -7,10 +7,31 @@ import CTA from "@/components/CTA";
 import HeaderShell from "@/components/HeaderShell";
 import CallCTA from "@/components/CallCTA";
 import GoogleAnalytics from "@/components/Googleanalytics";
+import { SITE_URL, SITE } from "@/lib/site";
+import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "MCBROTHER",
-  description: "MCBROTHER JSC – Giải pháp máy móc chế biến & đóng gói thực phẩm.",
+  // Gốc để Next tự đổi đường dẫn tương đối (ảnh OG, canonical) thành URL đầy đủ
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Máy chế biến & đóng gói thực phẩm công nghiệp | MCBROTHER",
+    // Trang con chỉ cần đặt title ngắn, ví dụ "Sản phẩm" → "Sản phẩm | MCBROTHER"
+    template: "%s | MCBROTHER",
+  },
+  description:
+    "MCBROTHER JSC – Giải pháp máy chế biến & đóng gói thực phẩm cho doanh nghiệp: lắp đặt tận nơi, bảo hành chính hãng, hỗ trợ kỹ thuật trọn đời.",
+  applicationName: SITE.name,
+  openGraph: {
+    type: "website",
+    locale: "vi_VN",
+    siteName: SITE.name,
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: SITE.name }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [DEFAULT_OG_IMAGE],
+  },
+  formatDetection: { telephone: false },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

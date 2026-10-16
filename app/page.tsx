@@ -53,6 +53,7 @@ export const metadata: Metadata = {
       "Chuyên cung cấp máy chế biến thực phẩm, máy đóng gói, dây chuyền sản xuất và giải pháp tự động hóa cho doanh nghiệp trên toàn quốc.",
 
     locale: "vi_VN",
+    images: [{ url: "/images/og-default.jpg", width: 1200, height: 630, alt: "MCBROTHER JSC" }],
   },
 
   robots: {
@@ -276,7 +277,7 @@ export default async function HomePage() {
                 {/* IMAGE */}
                 <div className="relative h-56 bg-gray-200 overflow-hidden">
                   <WatermarkImage
-                    src={cat.ogImage || cat.banner || "/images/no-image.png"}
+                    src={cat.ogImage || cat.banner || "/images/no-image.jpg"}
                     alt={`${cat.name} MCBROTHER`}
                     wrapperClassName="w-full h-full"
                     className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
@@ -368,7 +369,7 @@ export default async function HomePage() {
               </a>
 
               <a
-                href="tel:0900000000"
+                href="tel:0834551888"
                 className="px-6 py-3 rounded-lg border border-white/50 hover:bg-white/10 transition"
               >
                 Gọi ngay
@@ -428,7 +429,7 @@ export default async function HomePage() {
           <Link href={`/tin-tuc/${post.slug}`}>
             <div className="relative aspect-[16/10] overflow-hidden">
               <img
-                src={post.coverImage || "/no-image.png"}
+                src={post.coverImage || "/images/no-image.jpg"}
                 alt={post.title}
                 className="h-full w-full object-cover transition duration-500 hover:scale-105"
               />

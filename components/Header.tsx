@@ -136,7 +136,7 @@ export default function Header({ categories = [] }: { categories: Cat[] }) {
         hover:shadow-[0_10px_25px_rgba(0,0,0,0.15)]"
       >
         <Image
-          src={child.ogImage || "/images/no-image.png"}
+          src={child.ogImage || "/images/no-image.jpg"}
           alt={child.name}
           fill
           className="object-cover"

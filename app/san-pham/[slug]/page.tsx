@@ -10,6 +10,8 @@ import ProductMedia from "@/components/ProductMedia";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { notFound, permanentRedirect } from "next/navigation";
 import { findRedirect } from "@/lib/slug-redirect";
+import { abs } from "@/lib/site";
+import { brandTitle, metaDescription, absImage, breadcrumbJsonLd, ldJson, NO_IMAGE } from "@/lib/seo";
 /* ===================== CONFIG ===================== */
 // ĐỔI SANG ZALO CỦA BẠN
 const ZALO_URL = 'https://zalo.me/0834551888';
@@ -138,20 +140,29 @@ export async function generateMetadata(
   if (!p) return {};
 
   const title = p.metaTitle || p.name;
-  const description = p.metaDescription || p.short || undefined;
+  const description =
+    metaDescription(p.metaDescription || p.short || p.description) ||
+    `${p.name} – MCBROTHER JSC cung cấp, lắp đặt tận nơi, bảo hành chính hãng.`;
+  // Mặc định canonical = chính URL sản phẩm (tránh trùng lặp do ?utm=, ?fbclid=…)
+  const url = p.canonicalUrl || abs(`/san-pham/${p.slug}`);
+  const image = absImage(p.ogImage || p.coverImage);
 
   return {
-    title,
+    title: brandTitle(title),
     description,
-    alternates: p.canonicalUrl
-      ? { canonical: p.canonicalUrl }
-      : undefined,
+    alternates: { canonical: url },
     openGraph: {
+      type: 'website',
+      url,
       title,
       description,
-      images: p.ogImage || p.coverImage
-        ? [String(p.ogImage || p.coverImage)]
-        : undefined,
+      images: [{ url: image, alt: p.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image],
     },
     robots: {
       index: !(p.noindex ?? false),
@@ -252,7 +263,10 @@ export default async function ProductDetailPage(
       : galleryImages.length
         ? galleryImages.map((im) => im.url)
         : undefined,
-    description: p.metaDescription || p.short || undefined,
+    description: metaDescription(p.metaDescription || p.short || p.description),
+    url: abs(`/san-pham/${p.slug}`),
+    brand: { '@type': 'Brand', name: 'MCBROTHER' },
+    category: p.category?.name || undefined,
     offers:
       typeof p.price === 'number'
         ? {
@@ -260,6 +274,8 @@ export default async function ProductDetailPage(
           priceCurrency: 'VND',
           price: String(p.price),
           availability: 'https://schema.org/InStock',
+          url: abs(`/san-pham/${p.slug}`),
+          seller: { '@type': 'Organization', name: 'MCBROTHER JSC' },
         }
         : undefined,
     additionalProperty: additionalProps.map((x) => ({
@@ -270,8 +286,24 @@ export default async function ProductDetailPage(
   };
   // app/san-pham/[slug]/page.tsx
   // (GIỮ NGUYÊN TOÀN BỘ IMPORT + HELPER + SEO + QUERY)
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: 'Trang chủ', path: '/' },
+    { name: 'Sản phẩm', path: '/san-pham' },
+    ...(p.category ? [{ name: p.category.name, path: `/${p.category.slug}` }] : []),
+    { name: p.name, path: `/san-pham/${p.slug}` },
+  ]);
+
   return (
     <main className="bg-[var(--color-bg)] text-slate-800">
+      {/* JSON-LD cho Google: thông tin sản phẩm + breadcrumb */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: ldJson(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd) }}
+      />
 
       {/* ===== HERO ===== */}
       <section className="relative">
@@ -291,7 +323,7 @@ export default async function ProductDetailPage(
             {p.category && (
               <>
                 <span className="px-2">/</span>
-                <Link href={`/danh-muc/${p.category.slug}`} className="hover:underline">
+                <Link href={`/${p.category.slug}`} className="hover:underline">
                   {p.category.name}
                 </Link>
               </>
@@ -625,7 +657,7 @@ export default async function ProductDetailPage(
                       <Link href={`/san-pham/${rp.slug}`} className="relative block">
                         <div className="relative h-[180px] bg-white flex items-center justify-center overflow-hidden">
                           <img
-                            src={rp.coverImage || "/images/placeholder.jpg"}
+                            src={rp.coverImage || NO_IMAGE}
                             alt={rp.name}
                             loading="lazy"
                             className="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-105"

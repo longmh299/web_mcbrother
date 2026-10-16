@@ -1,68 +1,54 @@
-// src/lib/seo.ts
-import type { Metadata } from 'next';
-import { site } from '@/site';
+// lib/seo.ts
+// Helper SEO dùng chung cho metadata các trang.
+import type { Metadata } from "next";
+import { SITE, abs } from "@/lib/site";
 
-export type SEOFields = {
-  metaTitle?: string | null;
-  metaDescription?: string | null;
-  canonicalUrl?: string | null;
-  ogImage?: string | null;
-  noindex?: boolean | null;
-  nofollow?: boolean | null;
-};
+/** Ảnh chia sẻ mặc định (Facebook/Zalo/Google) – 1200x630. */
+export const DEFAULT_OG_IMAGE = "/images/og-default.jpg";
 
-export function canonicalFor(path: string, canonicalUrl?: string | null) {
-  if (canonicalUrl && /^https?:\/\//.test(canonicalUrl)) return canonicalUrl;
-  const base = site.url.replace(/\/$/, '');
-  const p = path.startsWith('/') ? path : `/${path}`;
-  return canonicalUrl ? canonicalUrl : `${base}${p}`;
+/** Ảnh thay thế khi sản phẩm/bài viết/danh mục chưa có ảnh. */
+export const NO_IMAGE = "/images/no-image.jpg";
+
+/**
+ * Layout gốc có title template "%s | MCBROTHER".
+ * Nếu tiêu đề admin nhập đã chứa "MCBROTHER" thì dùng nguyên văn (absolute),
+ * tránh bị thành "... | MCBROTHER | MCBROTHER".
+ */
+export function brandTitle(title: string): Metadata["title"] {
+  return /mcbrother/i.test(title) ? { absolute: title } : title;
 }
 
-export function robotsFrom(flags?: { noindex?: boolean | null; nofollow?: boolean | null }) {
-  const index = !flags?.noindex;
-  const follow = !flags?.nofollow;
+/** Cắt mô tả về ~160 ký tự (độ dài Google hiển thị), bỏ thẻ HTML & khoảng trắng thừa. */
+export function metaDescription(text: string | null | undefined, max = 160) {
+  if (!text) return undefined;
+  const clean = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  return clean.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+}
+
+/** URL tuyệt đối cho ảnh (OG cần URL đầy đủ). */
+export function absImage(url: string | null | undefined) {
+  if (!url) return abs(DEFAULT_OG_IMAGE);
+  return /^https?:\/\//i.test(url) ? url : abs(url);
+}
+
+/** JSON-LD BreadcrumbList. items: [{ name, path }] theo thứ tự từ Trang chủ. */
+export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   return {
-    index,
-    follow,
-    nocache: false,
-    googleBot: {
-      index,
-      follow,
-      'max-video-preview': -1 as const,
-      'max-image-preview': 'large' as const,
-      'max-snippet': -1 as const,
-    },
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: it.name,
+      item: abs(it.path),
+    })),
   };
 }
 
-export function buildMetadataFromSEO(
-  seo: SEOFields,
-  path: string,
-  fallback: { title: string; description?: string; image?: string }
-): Metadata {
-  const title = seo.metaTitle || fallback.title;
-  const description = seo.metaDescription || fallback.description || '';
-  const canonical = canonicalFor(path, seo.canonicalUrl);
-  const image = seo.ogImage || fallback.image || `${site.url}/og-default.jpg`;
-
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    openGraph: {
-      type: 'website',
-      url: canonical,
-      siteName: site.name,
-      title,
-      description,
-      images: [{ url: image }],
-    },
-    robots: robotsFrom({ noindex: seo.noindex, nofollow: seo.nofollow }),
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [image],
-    },
-  };
+/** Chuỗi JSON an toàn để nhét vào <script type="application/ld+json"> (chặn "</script>"). */
+export function ldJson(data: unknown) {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
 }
+
+export { SITE };

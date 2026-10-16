@@ -1,10 +1,11 @@
-// app/danh-muc/[slug]/page.tsx
+// app/[slug]/page.tsx — trang danh mục sản phẩm (URL: /<slug-danh-muc>)
 
 import type { Metadata } from "next";
 import ProductCard from "@/components/ProductCard";
 import CategoryMegaMenu from "@/components/CategoryMegaMenu";
 import { prisma } from "@/lib/prisma";
 import { abs } from "@/lib/site";
+import { brandTitle, metaDescription, absImage, breadcrumbJsonLd, ldJson } from "@/lib/seo";
 import { redirect, notFound } from "next/navigation";
 import Image from "next/image";
 export const runtime = "nodejs";
@@ -24,14 +25,14 @@ export async function generateMetadata(
 
   const title = c.metaTitle || c.name;
   const description =
-    c.metaDescription ||
+    metaDescription(c.metaDescription) ||
     `MCBROTHER cung cấp ${c.name.toLowerCase()} cho ngành thực phẩm, giúp tối ưu sản xuất và nâng cao hiệu suất.`;
 
   const url = c.canonicalUrl || abs(`/${c.slug}`);
-  const ogImage = c.ogImage || abs("/images/placeholder.jpg");
+  const ogImage = absImage(c.ogImage || c.banner);
 
   return {
-    title,
+    title: brandTitle(title),
     description,
     alternates: { canonical: url },
     openGraph: {
@@ -138,10 +139,22 @@ export default async function CategoryPage(
 
   return (
     <main className="bg-[var(--color-bg)] text-slate-800">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: ldJson(
+            breadcrumbJsonLd([
+              { name: "Trang chủ", path: "/" },
+              { name: "Sản phẩm", path: "/san-pham" },
+              { name: c.name, path: `/${c.slug}` },
+            ])
+          ),
+        }}
+      />
 
       <section className="relative h-[320px] md:h-[420px] overflow-hidden bg-[#25282c]">
   <Image
-    src={c.banner || "/images/banner2.jpg"}
+    src={c.banner || "/images/banner2.JPG"}
     alt={c.name}
     fill
     priority

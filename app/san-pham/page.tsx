@@ -4,6 +4,20 @@ import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import CategoryMegaMenu from "@/components/CategoryMegaMenu";
 import { ArrowRight } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Sản phẩm – Máy chế biến & đóng gói thực phẩm",
+  description:
+    "Danh mục máy chế biến thực phẩm, máy đóng gói, máy hút chân không, máy co màng, máy in date, máy chiết rót… chính hãng từ MCBROTHER. Báo giá nhanh, lắp đặt tận nơi.",
+  alternates: { canonical: "/san-pham" },
+  openGraph: {
+    title: "Sản phẩm | MCBROTHER",
+    description:
+      "Máy chế biến & đóng gói thực phẩm chính hãng, lắp đặt tận nơi, bảo hành chính hãng.",
+    url: "/san-pham",
+  },
+};
 
 export const runtime = "nodejs";
 export const revalidate = 60;

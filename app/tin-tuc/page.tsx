@@ -1,6 +1,7 @@
 // app/tin-tuc/page.tsx
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
@@ -130,6 +131,33 @@ async function getData(params: SearchParams) {
     totalPages: Math.max(1, Math.ceil(count / PER_PAGE)),
     items,
     categories,
+  };
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}): Promise<Metadata> {
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp.page) || 1);
+  const categoryId = sp.categoryId && /^\d+$/.test(sp.categoryId) ? sp.categoryId : undefined;
+  const hasQuery = Boolean((sp.q ?? "").trim());
+
+  // Canonical trỏ về đúng trang đang xem (giữ category + page, bỏ tham số rác)
+  const qs = new URLSearchParams();
+  if (categoryId) qs.set("categoryId", categoryId);
+  if (page > 1) qs.set("page", String(page));
+  const canonical = `/tin-tuc${qs.toString() ? `?${qs}` : ""}`;
+
+  return {
+    title: page > 1 ? `Tin tức – Trang ${page}` : "Tin tức – Kiến thức máy chế biến & đóng gói",
+    description:
+      "Tin tức, kinh nghiệm chọn máy, hướng dẫn vận hành và bảo trì máy chế biến – đóng gói thực phẩm từ đội ngũ kỹ thuật MCBROTHER.",
+    alternates: { canonical },
+    openGraph: { title: "Tin tức | MCBROTHER", url: canonical },
+    // Trang kết quả tìm kiếm nội bộ: không cho Google index, vẫn cho đi theo link
+    robots: hasQuery ? { index: false, follow: true } : undefined,
   };
 }
 

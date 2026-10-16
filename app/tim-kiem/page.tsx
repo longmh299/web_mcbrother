@@ -1,6 +1,13 @@
 // app/tim-kiem/page.tsx
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+// Trang kết quả tìm kiếm: không cho Google index (tránh hàng nghìn URL rác ?q=…)
+export const metadata: Metadata = {
+  title: "Tìm kiếm",
+  robots: { index: false, follow: true },
+};
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +20,7 @@ function slugify(s: string) {
   return s
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }

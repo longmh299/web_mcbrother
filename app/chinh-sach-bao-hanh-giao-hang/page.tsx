@@ -13,7 +13,8 @@ import {
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: `Chính sách bảo hành & giao hàng | ${SITE.name}`,
+  title: "Chính sách bảo hành & giao hàng",
+  alternates: { canonical: "/chinh-sach-bao-hanh-giao-hang" },
   description:
     "Chính sách bảo hành 6-12 tháng theo từng loại sản phẩm và chính sách giao hàng, lắp đặt của MCBROTHER JSC.",
 };

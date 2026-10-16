@@ -12,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/tin-tuc",
     "/gioi-thieu",
     "/lien-he",
+    "/chinh-sach-bao-hanh-giao-hang",
   ].map((path) => ({
     url: `${SITE_URL}${path}`,
     lastModified: new Date(),
@@ -21,8 +22,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const [products, posts, categories] = await Promise.all([
+      // Không đưa trang đã đặt noindex vào sitemap (tránh tín hiệu mâu thuẫn với Google)
       prisma.product.findMany({
-        where: { published: true },
+        where: { published: true, noindex: false },
         select: { slug: true, updatedAt: true },
       }),
       prisma.post.findMany({
@@ -30,6 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         select: { slug: true, updatedAt: true },
       }),
       prisma.category.findMany({
+        where: { noindex: false },
         select: { slug: true, updatedAt: true },
       }),
     ]);

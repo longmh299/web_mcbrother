@@ -15,6 +15,12 @@ const nextConfig = {
         destination: 'https://mcbrother.com.vn/:path*',
         permanent: true,
       },
+      {
+        // URL danh mục cũ /danh-muc/<slug> → URL hiện tại /<slug> (301, giữ SEO)
+        source: '/danh-muc/:slug',
+        destination: '/:slug',
+        permanent: true,
+      },
     ];
   },
 
