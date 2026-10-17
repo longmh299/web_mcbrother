@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, ExternalLink, Loader2, Save, X } from "lucide-react";
 import NewsEditor from "@/components/NewsEditor";
+import SeoSuggestButton from "./SeoSuggestButton";
 import { slugify } from "@/lib/slug";
 import { savePost } from "@/app/admin/news/actions";
 import { Card, CharCount, Field, ImagePicker, Switch, Toast, btnCls, inputCls, useToast } from "./ui";
@@ -389,7 +390,31 @@ export default function PostForm({
             </ul>
           </Card>
 
-          <Card title="SEO – Google" desc="Để trống sẽ tự lấy tiêu đề & mô tả ngắn.">
+          <Card
+            title="SEO – Google"
+            desc="Để trống sẽ tự lấy tiêu đề & mô tả ngắn."
+            actions={
+              <SeoSuggestButton
+                getPayload={() => {
+                  const sel = formRef.current?.querySelector<HTMLSelectElement>('select[name="categoryId"]');
+                  return {
+                    kind: "post",
+                    name: title,
+                    category: sel && sel.value ? sel.options[sel.selectedIndex].text.replace(/^(— )+/, "") : null,
+                    short: excerpt,
+                    content,
+                  };
+                }}
+                onResult={(r) => {
+                  setMetaTitle(r.metaTitle);
+                  setMetaDesc(r.metaDescription);
+                  markDirty();
+                  setToast({ type: "success", text: r.source === "ai" ? "Đã gợi ý bằng AI — xem lại rồi Lưu" : "Đã gợi ý tự động — xem lại rồi Lưu" });
+                }}
+                onError={(m) => setToast({ type: "error", text: m })}
+              />
+            }
+          >
             <div className="mb-4 rounded-lg border border-slate-200 p-3">
               <div className="truncate text-xs text-slate-500">{postUrl.replace(/^https?:\/\//, "")}</div>
               <div className="mt-0.5 line-clamp-2 text-[17px] leading-snug text-[#1a0dab]">{seoTitle}</div>

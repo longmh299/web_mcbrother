@@ -12,6 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { auditAll, ISSUE_LABEL, scoreTone, type IssueCode } from "@/lib/seo-audit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,15 @@ const fmtTime = (d: Date) =>
 
 export default async function AdminHome() {
   const live = { published: true };
-  const safe = <T,>(p: Promise<T>, fallback: T) => p.catch(() => fallback);
+  // Bọc từng truy vấn: lỗi (kể cả lỗi xảy ra ngay khi gọi) chỉ làm ô đó hiện 0, không làm sập cả trang
+  const safe = async <T,>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+    try {
+      return await fn();
+    } catch (e) {
+      console.error("DASHBOARD_QUERY_ERROR", e);
+      return fallback;
+    }
+  };
 
   const [
     prodTotal,
@@ -31,28 +40,19 @@ export default async function AdminHome() {
     postTotal,
     postDraft,
     newContacts,
-    noImage,
-    noSeoDesc,
-    noShort,
-    noCategory,
     latestContacts,
     recentProducts,
     recentPosts,
     leads7,
   ] = await Promise.all([
-    safe(prisma.product.count(), 0),
-    safe(prisma.product.count({ where: live }), 0),
-    safe(prisma.category.count(), 0),
-    safe(prisma.post.count(), 0),
-    safe(prisma.post.count({ where: { published: false } }), 0),
-    safe(prisma.contactMessage.count({ where: { status: "new" } }), 0),
-    // Sản phẩm đang hiển thị nhưng còn thiếu thông tin
-    safe(prisma.product.count({ where: { ...live, OR: [{ coverImage: null }, { coverImage: "" }] } }), 0),
-    safe(prisma.product.count({ where: { ...live, OR: [{ metaDescription: null }, { metaDescription: "" }] } }), 0),
-    safe(prisma.product.count({ where: { ...live, OR: [{ short: null }, { short: "" }] } }), 0),
-    safe(prisma.product.count({ where: { ...live, categoryId: null } }), 0),
+    safe(() => prisma.product.count(), 0),
+    safe(() => prisma.product.count({ where: live }), 0),
+    safe(() => prisma.category.count(), 0),
+    safe(() => prisma.post.count(), 0),
+    safe(() => prisma.post.count({ where: { published: false } }), 0),
+    safe(() => prisma.contactMessage.count({ where: { status: "new" } }), 0),
     safe(
-      prisma.contactMessage.findMany({
+      () => prisma.contactMessage.findMany({
         where: { status: "new" },
         orderBy: { createdat: "desc" },
         take: 5,
@@ -61,14 +61,14 @@ export default async function AdminHome() {
       [] as any[]
     ),
     safe(
-      prisma.product.findMany({ orderBy: { updatedAt: "desc" }, take: 5, select: { id: true, name: true, updatedAt: true, published: true } }),
+      () => prisma.product.findMany({ orderBy: { updatedAt: "desc" }, take: 5, select: { id: true, name: true, updatedAt: true, published: true } }),
       [] as any[]
     ),
     safe(
-      prisma.post.findMany({ orderBy: { updatedAt: "desc" }, take: 5, select: { id: true, title: true, updatedAt: true, published: true } }),
+      () => prisma.post.findMany({ orderBy: { updatedAt: "desc" }, take: 5, select: { id: true, title: true, updatedAt: true, published: true } }),
       [] as any[]
     ),
-    safe(prisma.clickEvent.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 86400e3) } } }), 0),
+    safe(() => prisma.clickEvent.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 86400e3) } } }), 0),
   ]);
 
   const stats = [
@@ -85,12 +85,33 @@ export default async function AdminHome() {
     { href: "/admin/news", label: "Bài viết", value: postTotal, sub: postDraft ? `${postDraft} bản nháp` : "Không có bản nháp", icon: Newspaper, tone: "bg-amber-50 text-amber-600" },
   ];
 
-  const todo = [
-    { n: noImage, label: "sản phẩm chưa có ảnh đại diện", href: "/admin/products?status=published&missing=image" },
-    { n: noShort, label: "sản phẩm chưa có mô tả ngắn", href: "/admin/products?status=published&missing=short" },
-    { n: noSeoDesc, label: "sản phẩm chưa có mô tả SEO", href: "/admin/products?status=published&missing=seo" },
-    { n: noCategory, label: "sản phẩm chưa có danh mục", href: "/admin/products?cat=none" },
-  ].filter((t) => t.n > 0);
+  // ----- Kiểm tra SEO nhanh cho sản phẩm đang hiển thị -----
+  const seoProducts = await safe(
+    () =>
+      prisma.product.findMany({
+        where: live,
+        select: {
+          id: true, name: true, slug: true, metaTitle: true, metaDescription: true, short: true, description: true,
+          coverImage: true, faqs: true, noindex: true, category: { select: { name: true } },
+        },
+      }),
+    [] as any[]
+  );
+  const audit = auditAll(
+    seoProducts.map((p: any) => ({
+      id: p.id, kind: "product" as const, name: p.name, slug: p.slug, metaTitle: p.metaTitle, metaDescription: p.metaDescription,
+      short: p.short, content: p.description, coverImage: p.coverImage, categoryName: p.category?.name ?? null,
+      faqCount: Array.isArray(p.faqs) ? p.faqs.length : 0, noindex: p.noindex,
+    }))
+  );
+  const seoScores = [...audit.values()];
+  const seoAvg = seoScores.length ? Math.round(seoScores.reduce((s, r) => s + r.score, 0) / seoScores.length) : 100;
+  const issueCount = new Map<IssueCode, number>();
+  seoScores.forEach((r) => r.issues.forEach((i) => i.level !== "info" && issueCount.set(i.code, (issueCount.get(i.code) ?? 0) + 1)));
+  const todo = [...issueCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([code, n]) => ({ n, label: `sản phẩm — ${ISSUE_LABEL[code]}`, href: `/admin/seo?issue=${code}` }));
 
   return (
     <div className="space-y-6">
@@ -165,11 +186,16 @@ export default async function AdminHome() {
         {/* Việc cần làm */}
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <header className="border-b border-slate-100 px-5 py-3.5">
-            <h2 className="font-semibold text-slate-900">Cần bổ sung</h2>
-            <p className="text-xs text-slate-500">Sản phẩm đang hiển thị nhưng còn thiếu thông tin — ảnh hưởng tới SEO & khách</p>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-semibold text-slate-900">Cần bổ sung (SEO)</h2>
+              <Link href="/admin/seo" className={`rounded-md px-2 py-0.5 text-sm font-bold tabular-nums ${scoreTone(seoAvg)}`} title="Điểm SEO trung bình">
+                {seoAvg}/100
+              </Link>
+            </div>
+            <p className="text-xs text-slate-500">Sản phẩm đang hiển thị còn lỗi tiêu đề, mô tả, nội dung… — bấm để sửa nhanh</p>
           </header>
           {todo.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-slate-500">Sản phẩm đã đủ thông tin cơ bản 👍</p>
+            <p className="px-5 py-8 text-center text-sm text-slate-500">Sản phẩm không còn lỗi SEO quan trọng 👍</p>
           ) : (
             <ul className="divide-y divide-slate-100">
               {todo.map((t) => (
@@ -183,6 +209,11 @@ export default async function AdminHome() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link href="/admin/seo" className="flex items-center justify-center gap-1 px-5 py-2.5 text-sm font-medium text-blue-600 hover:bg-slate-50">
+                  Mở trang Kiểm tra SEO <ArrowRight size={14} />
+                </Link>
+              </li>
             </ul>
           )}
         </section>

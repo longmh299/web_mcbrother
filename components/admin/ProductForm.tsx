@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ExternalLink, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import RichEditor from "@/components/RichEditor";
+import SeoSuggestButton from "./SeoSuggestButton";
 import { slugify } from "@/lib/slug";
 import { saveProduct } from "@/app/admin/products/actions";
 import {
@@ -671,7 +672,34 @@ export default function ProductForm({
             </div>
           </Card>
 
-          <Card title="SEO – Google" desc="Để trống sẽ tự lấy tên & mô tả ngắn.">
+          <Card
+            title="SEO – Google"
+            desc="Để trống sẽ tự lấy tên & mô tả ngắn."
+            actions={
+              <SeoSuggestButton
+                getPayload={() => {
+                  const f = formRef.current;
+                  const sel = f?.querySelector<HTMLSelectElement>('select[name="categoryId"]');
+                  const val = (n: string) => f?.querySelector<HTMLInputElement>(`[name="${n}"]`)?.value || "";
+                  return {
+                    kind: "product",
+                    name,
+                    category: sel && sel.value ? sel.options[sel.selectedIndex].text.replace(/^(— )+/, "") : null,
+                    short,
+                    content: val("description"),
+                    specs: SPECS.map((x) => (val(String(x.key)) ? `${x.label} ${val(String(x.key))}` : "")).filter(Boolean).join("; "),
+                  };
+                }}
+                onResult={(r) => {
+                  setMetaTitle(r.metaTitle);
+                  setMetaDesc(r.metaDescription);
+                  markDirty();
+                  setToast({ type: "success", text: r.source === "ai" ? "Đã gợi ý bằng AI — xem lại rồi Lưu" : "Đã gợi ý tự động — xem lại rồi Lưu" });
+                }}
+                onError={(m) => setToast({ type: "error", text: m })}
+              />
+            }
+          >
             {/* Xem trước kết quả Google */}
             <div className="mb-4 rounded-lg border border-slate-200 p-3">
               <div className="truncate text-xs text-slate-500">{productUrl.replace(/^https?:\/\//, "")}</div>
