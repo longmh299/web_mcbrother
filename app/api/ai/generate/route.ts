@@ -1,8 +1,9 @@
 // app/api/ai/generate/route.ts
-// Sinh bài viết bằng OpenAI. CHỈ admin được gọi (route này tốn tiền API).
+// Sinh bài viết bằng AI (Claude nếu có ANTHROPIC_API_KEY, không thì OpenAI). CHỈ admin được gọi (route này tốn tiền API).
 import { NextResponse } from "next/server";
 import { denyIfNotAdmin } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { aiProvider, askAI } from "@/lib/ai-text";
 
 export const runtime = "nodejs";
 
@@ -20,8 +21,8 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ ok: false, error: "Chưa cấu hình OPENAI_API_KEY" }, { status: 500 });
+  if (!aiProvider()) {
+    return NextResponse.json({ ok: false, error: "Chưa cấu hình ANTHROPIC_API_KEY (hoặc OPENAI_API_KEY)" }, { status: 500 });
   }
 
   const body = await req.json().catch(() => ({} as any));
@@ -67,33 +68,11 @@ Chủ đề: ${title}
 `;
 
   try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 2000, // giới hạn chi phí mỗi lần gọi
-      }),
-    });
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      console.error("OPENAI_ERROR", res.status, data?.error?.message);
-      return NextResponse.json({ ok: false, error: "AI tạm thời lỗi, thử lại sau." }, { status: 502 });
-    }
-
-    return NextResponse.json({
-      ok: true,
-      content: data?.choices?.[0]?.message?.content || "",
-    });
+    // giới hạn 2000 token mỗi lần gọi cho đỡ tốn
+    const { text } = await askAI({ prompt, maxTokens: 2000, temperature: 0.7 });
+    return NextResponse.json({ ok: true, content: text.replace(/^```(?:html)?\s*|\s*```$/g, "") });
   } catch (e) {
     console.error("AI_GENERATE_ERROR", e);
-    return NextResponse.json({ ok: false, error: "Lỗi máy chủ" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "AI tạm thời lỗi, thử lại sau." }, { status: 502 });
   }
 }

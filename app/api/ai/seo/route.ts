@@ -1,12 +1,13 @@
 // app/api/ai/seo/route.ts
 // Gợi ý Tiêu đề SEO + Mô tả SEO (+ mô tả ngắn nếu đang trống) cho sản phẩm / bài viết.
-// - Có OPENAI_API_KEY → dùng AI (gpt-4o-mini, rất rẻ: ~vài chục đồng / lần)
+// - Có ANTHROPIC_API_KEY → dùng Claude (claude-haiku-5-5); không có thì OPENAI_API_KEY → gpt-4o-mini
 // - Không có key / AI lỗi → tự ghép theo quy tắc từ tên, danh mục, mô tả sẵn có
 // CHỈ admin được gọi. Chỉ trả gợi ý, KHÔNG tự lưu — admin xem lại rồi bấm Lưu.
 import { NextResponse } from "next/server";
 import { denyIfNotAdmin } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { stripHtml, googleTitleOf, TITLE_MAX, DESC_MAX } from "@/lib/seo-audit";
+import { aiProvider, askAI } from "@/lib/ai-text";
 
 export const runtime = "nodejs";
 
@@ -76,9 +77,11 @@ export async function POST(req: Request) {
     specs: clip(b.specs, 400) || null,
   } as const;
 
-  const fallback = () => NextResponse.json({ ok: true, ...ruleBased({ ...input, short: b.short }) });
+  // ✅ nói rõ vì sao không dùng được AI: chưa có key trên server, hay có key nhưng OpenAI báo lỗi (hết tiền, key sai…)
+  const fallback = (aiError?: string) =>
+    NextResponse.json({ ok: true, ...ruleBased({ ...input, short: b.short }), aiError: aiError ?? (aiProvider() ? undefined : "no-key") });
 
-  if (!process.env.OPENAI_API_KEY) return fallback();
+  if (!aiProvider()) return fallback("no-key");
   // tối đa 60 lần gợi ý / 10 phút (đủ cho gợi ý hàng loạt cả trang)
   if (!rateLimit("ai-seo", 60, 10 * 60 * 1000)) {
     return NextResponse.json({ ok: false, error: "Gọi AI quá nhiều, thử lại sau ít phút." }, { status: 429 });
@@ -102,26 +105,17 @@ ${wantShort ? `3. "short": mô tả ngắn 3–4 dòng, mỗi dòng 1 ý nổi b
 Chỉ trả về JSON: {"metaTitle": "...", "metaDescription": "..."${wantShort ? ', "short": "..."' : ""}}`;
 
   try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.5,
-        max_tokens: 400,
-        response_format: { type: "json_object" },
-      }),
-    });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) {
-      console.error("AI_SEO_ERROR", res.status, data?.error?.message);
-      return fallback();
-    }
-    const j = JSON.parse(data?.choices?.[0]?.message?.content || "{}");
+    const { text } = await askAI({ prompt, maxTokens: 400, temperature: 0.5, json: true });
+    const j = JSON.parse(text || "{}");
+    // ✅ chấp nhận cả kiểu tên khoá AI hay viết lệch (meta_title, title…)
+    j.metaTitle ??= j.meta_title ?? j.title;
+    j.metaDescription ??= j.meta_description ?? j.description;
     const metaTitle = fit(String(j.metaTitle ?? "").replace(/\s*\|\s*MCBROTHER\s*$/i, ""), TITLE_MAX - 12);
     const metaDescription = fit(String(j.metaDescription ?? ""), DESC_MAX);
-    if (!metaTitle || !metaDescription) return fallback();
+    if (!metaTitle || !metaDescription) {
+      console.error("AI_SEO_EMPTY", text.slice(0, 500));
+      return fallback(`AI trả về thiếu tiêu đề/mô tả: ${text.slice(0, 120)}`);
+    }
     return NextResponse.json({
       ok: true,
       metaTitle,
@@ -132,6 +126,6 @@ Chỉ trả về JSON: {"metaTitle": "...", "metaDescription": "..."${wantShort 
     });
   } catch (e) {
     console.error("AI_SEO_ERROR", e);
-    return fallback();
+    return fallback(String((e as any)?.message || e).slice(0, 200));
   }
 }

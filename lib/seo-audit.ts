@@ -103,11 +103,27 @@ export const TITLE_MIN = 30;
 export const DESC_MIN = 120;
 export const DESC_MAX = 160;
 
+// ✅ Trình soạn thảo lưu chữ có dấu dạng "D&acirc;y m&aacute;y" -> phải GIẢI MÃ, không được xoá (xoá thì thành "D y m y")
+const NAMED: Record<string, string> = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—", hellip: "…",
+  lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”", laquo: "«", raquo: "»", bull: "•", middot: "·",
+  deg: "°", plusmn: "±", times: "×", divide: "÷", sup2: "²", sup3: "³", micro: "µ", copy: "©", reg: "®", trade: "™",
+  Agrave: "À", Aacute: "Á", Acirc: "Â", Atilde: "Ã", Egrave: "È", Eacute: "É", Ecirc: "Ê", Igrave: "Ì", Iacute: "Í",
+  Ograve: "Ò", Oacute: "Ó", Ocirc: "Ô", Otilde: "Õ", Ugrave: "Ù", Uacute: "Ú", Yacute: "Ý",
+  agrave: "à", aacute: "á", acirc: "â", atilde: "ã", egrave: "è", eacute: "é", ecirc: "ê", igrave: "ì", iacute: "í",
+  ograve: "ò", oacute: "ó", ocirc: "ô", otilde: "õ", ugrave: "ù", uacute: "ú", yacute: "ý",
+};
+export const decodeEntities = (s: string) =>
+  s.replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]*);/gi, (m, e: string) => {
+    if (e[0] === "#") {
+      const n = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+      return Number.isFinite(n) && n > 0 && n < 0x110000 ? String.fromCodePoint(n) : " ";
+    }
+    return NAMED[e] ?? " ";
+  });
+
 export const stripHtml = (html: string | null | undefined) =>
-  (html ?? "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&[a-z]+;/g, " ")
+  decodeEntities((html ?? "").replace(/<[^>]+>/g, " "))
     .replace(/\s+/g, " ")
     .trim();
 

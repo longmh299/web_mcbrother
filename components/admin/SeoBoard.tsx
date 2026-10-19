@@ -28,7 +28,7 @@ export type SeoRow = {
   issues: SeoIssue[];
 };
 
-type Draft = { metaTitle: string; metaDescription: string; short?: string; source?: "ai" | "rule" };
+type Draft = { metaTitle: string; metaDescription: string; short?: string; source?: "ai" | "rule"; aiError?: string };
 
 const LEVEL_CLS = {
   error: "bg-red-50 text-red-700 ring-red-200",
@@ -93,7 +93,7 @@ export default function SeoBoard({ rows, kind, initialIssue }: { rows: SeoRow[];
       if (!j?.ok) throw new Error(j?.error || "Không tạo được gợi ý");
       setDrafts((s) => ({
         ...s,
-        [r.id]: { metaTitle: j.metaTitle, metaDescription: j.metaDescription, short: j.short, source: j.source },
+        [r.id]: { metaTitle: j.metaTitle, metaDescription: j.metaDescription, short: j.short, source: j.source, aiError: j.aiError },
       }));
       setOpen((o) => ({ ...o, [r.id]: true }));
       return true;
@@ -290,7 +290,11 @@ export default function SeoBoard({ rows, kind, initialIssue }: { rows: SeoRow[];
                       {d.source && (
                         <div className="flex items-center gap-1.5 text-xs font-medium text-violet-700">
                           <Sparkles size={13} />
-                          {d.source === "ai" ? "Gợi ý từ AI — hãy đọc lại trước khi lưu" : "Gợi ý tự động (chưa cấu hình AI)"}
+                          {d.source === "ai"
+                            ? "Gợi ý từ AI — hãy đọc lại trước khi lưu"
+                            : d.aiError && d.aiError !== "no-key"
+                              ? `Gợi ý tự động — AI lỗi: ${d.aiError}`
+                              : "Gợi ý tự động (server web chưa có ANTHROPIC_API_KEY)"}
                         </div>
                       )}
                       <div>
