@@ -19,7 +19,7 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
           where: { published: true },
           select: {
             id: true, name: true, slug: true, metaTitle: true, metaDescription: true, short: true, description: true,
-            coverImage: true, faqs: true, noindex: true, power: true, voltage: true, dimensions: true, material: true,
+            coverImage: true, faqs: true, noindex: true, warranty: true, power: true, voltage: true, dimensions: true, material: true,
             category: { select: { name: true } },
           },
         })
@@ -48,6 +48,8 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
           noindex: p.noindex,
           extra: {
             editHref: `/admin/products/${p.id}/edit`,
+            faqQuestions: Array.isArray(p.faqs) ? p.faqs.map((f: any) => String(f?.question ?? "")).filter(Boolean) : [],
+            warranty: p.warranty ?? "",
             publicHref: `/san-pham/${p.slug}`,
             specs: [p.power && `Công suất ${p.power}`, p.voltage && `Điện áp ${p.voltage}`, p.dimensions && `Kích thước ${p.dimensions}`, p.material && `Vật liệu ${p.material}`]
               .filter(Boolean)
@@ -58,7 +60,7 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
           id: p.id, kind: "post", name: p.title, slug: p.slug, metaTitle: p.metaTitle, metaDescription: p.metaDescription,
           short: p.excerpt, content: p.content, coverImage: p.coverImage, categoryName: p.category?.name ?? null,
           faqCount: 0, noindex: p.noindex,
-          extra: { editHref: `/admin/news/${p.id}/edit`, publicHref: `/tin-tuc/${p.slug}`, specs: "" },
+          extra: { editHref: `/admin/news/${p.id}/edit`, publicHref: `/tin-tuc/${p.slug}`, specs: "", faqQuestions: [], warranty: "" },
         }));
 
   const results = auditAll(inputs);
@@ -80,6 +82,8 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
       editHref: i.extra.editHref!,
       publicHref: i.extra.publicHref!,
       specs: i.extra.specs ?? "",
+      faqQuestions: i.extra.faqQuestions ?? [],
+      warranty: i.extra.warranty ?? "",
     };
   });
 

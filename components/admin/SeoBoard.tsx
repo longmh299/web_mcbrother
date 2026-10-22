@@ -5,8 +5,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { ChevronDown, ExternalLink, Loader2, Pencil, Save, Sparkles, X } from "lucide-react";
-import { applySeo } from "@/app/admin/seo/actions";
+import { ChevronDown, ExternalLink, Loader2, MessageCircleQuestion, Pencil, Save, Sparkles, Trash2, X } from "lucide-react";
+import { addProductFaqs, applySeo, type FaqItem } from "@/app/admin/seo/actions";
 import { ISSUE_LABEL, scoreTone, TITLE_MAX, DESC_MAX, DESC_MIN, type IssueCode, type SeoIssue } from "@/lib/seo-audit";
 import { CharCount, Toast, btnCls, inputCls, useToast } from "./ui";
 
@@ -22,11 +22,16 @@ export type SeoRow = {
   contentText: string;
   category: string | null;
   specs: string;
+  /** Câu hỏi FAQ đang có (sản phẩm) */
+  faqQuestions: string[];
+  warranty: string;
   score: number;
   googleTitle: string;
   googleDesc: string;
   issues: SeoIssue[];
 };
+
+type FaqDraft = { items: FaqItem[]; source: "ai" | "rule"; aiError?: string };
 
 type Draft = { metaTitle: string; metaDescription: string; short?: string; source?: "ai" | "rule"; aiError?: string };
 
@@ -49,7 +54,8 @@ export default function SeoBoard({ rows, kind, initialIssue }: { rows: SeoRow[];
   );
   const [open, setOpen] = useState<Record<number, boolean>>({});
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
-  const [busy, setBusy] = useState<Record<number, "ai" | "save" | undefined>>({});
+  const [faqDrafts, setFaqDrafts] = useState<Record<number, FaqDraft>>({});
+  const [busy, setBusy] = useState<Record<number, "ai" | "save" | "faq" | undefined>>({});
   const [bulk, setBulk] = useState<{ done: number; total: number } | null>(null);
 
   // ---- thống kê lỗi ----
@@ -129,9 +135,87 @@ export default function SeoBoard({ rows, kind, initialIssue }: { rows: SeoRow[];
     return true;
   }
 
+  // ---- FAQ ----
+  async function suggestFaq(r: SeoRow, silent = false) {
+    setBusy((b) => ({ ...b, [r.id]: "faq" }));
+    try {
+      const res = await fetch("/api/ai/faq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: r.name,
+          category: r.category,
+          short: r.short,
+          content: r.contentText,
+          specs: r.specs,
+          warranty: r.warranty,
+          existing: r.faqQuestions,
+          count: 3,
+        }),
+      });
+      const j = await res.json().catch(() => null);
+      if (!j?.ok || !j.faqs?.length) throw new Error(j?.error || "Không tạo được FAQ");
+      setFaqDrafts((s) => ({ ...s, [r.id]: { items: j.faqs, source: j.source, aiError: j.aiError } }));
+      setOpen((o) => ({ ...o, [r.id]: true }));
+      // cuộn tới khung FAQ vừa tạo để đọc lại
+      if (!silent) setTimeout(() => document.getElementById(`faq-${r.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 150);
+      return true;
+    } catch (e: any) {
+      if (!silent) setToast({ type: "error", text: e?.message || "Lỗi tạo FAQ" });
+      return false;
+    } finally {
+      setBusy((b) => ({ ...b, [r.id]: undefined }));
+    }
+  }
+
+  async function saveFaq(r: SeoRow, silent = false) {
+    const fd = faqDrafts[r.id];
+    if (!fd) return true;
+    setBusy((b) => ({ ...b, [r.id]: "save" }));
+    const res = await addProductFaqs(r.id, fd.items);
+    setBusy((b) => ({ ...b, [r.id]: undefined }));
+    if (!res.ok) {
+      if (!silent) setToast({ type: "error", text: res.error || "Lưu FAQ thất bại" });
+      return false;
+    }
+    setFaqDrafts((s) => {
+      const n = { ...s };
+      delete n[r.id];
+      return n;
+    });
+    if (!silent) {
+      setToast({ type: "success", text: `Đã thêm FAQ — sản phẩm có ${res.total} câu hỏi` });
+      router.refresh();
+    }
+    return true;
+  }
+
+  const editFaq = (id: number, i: number, patch: Partial<FaqItem>) =>
+    setFaqDrafts((s) => ({ ...s, [id]: { ...s[id], items: s[id].items.map((f, k) => (k === i ? { ...f, ...patch } : f)) } }));
+  const removeFaq = (id: number, i: number) =>
+    setFaqDrafts((s) => {
+      const items = s[id].items.filter((_, k) => k !== i);
+      const n = { ...s };
+      if (items.length) n[id] = { ...s[id], items };
+      else delete n[id];
+      return n;
+    });
+
   // ---- hàng loạt ----
   const fixable = visible.filter((r) => r.issues.some((i) => FIXABLE.includes(i.code))).slice(0, 20);
-  const pendingSave = visible.filter((r) => drafts[r.id]?.source);
+  const pendingSave = visible.filter((r) => drafts[r.id]?.source || faqDrafts[r.id]);
+  const needFaq = kind === "product" ? visible.filter((r) => r.issues.some((i) => i.code === "no_faq") && !faqDrafts[r.id]).slice(0, 10) : [];
+
+  async function bulkFaq() {
+    setBulk({ done: 0, total: needFaq.length });
+    let ok = 0;
+    for (const [i, r] of needFaq.entries()) {
+      if (await suggestFaq(r, true)) ok++;
+      setBulk({ done: i + 1, total: needFaq.length });
+    }
+    setBulk(null);
+    setToast({ type: "success", text: `Đã tạo FAQ cho ${ok} sản phẩm — đọc lại rồi bấm “Lưu tất cả”` });
+  }
 
   async function bulkSuggest() {
     setBulk({ done: 0, total: fixable.length });
@@ -148,7 +232,9 @@ export default function SeoBoard({ rows, kind, initialIssue }: { rows: SeoRow[];
     setBulk({ done: 0, total: pendingSave.length });
     let ok = 0;
     for (const [i, r] of pendingSave.entries()) {
-      if (await save(r, true)) ok++;
+      const a = drafts[r.id]?.source ? await save(r, true) : true;
+      const b = faqDrafts[r.id] ? await saveFaq(r, true) : true;
+      if (a && b) ok++;
       setBulk({ done: i + 1, total: pendingSave.length });
     }
     setBulk(null);
@@ -187,13 +273,19 @@ export default function SeoBoard({ rows, kind, initialIssue }: { rows: SeoRow[];
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="text-sm font-medium text-slate-500">Sửa nhanh bằng AI</div>
           <p className="mt-1 text-xs text-slate-500">
-            Tạo gợi ý tiêu đề & mô tả cho tối đa 20 {noun} đang lọc. Bạn xem lại, chỉnh rồi mới lưu.
+            Tạo gợi ý tiêu đề & mô tả (tối đa 20 mục){kind === "product" ? ", FAQ (tối đa 10 sản phẩm)" : ""} cho các {noun} đang lọc. Bạn
+            xem lại, chỉnh rồi mới lưu.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" onClick={bulkSuggest} disabled={!!bulk || !fixable.length} className={btnCls.primary}>
               {bulk ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               {bulk ? `Đang xử lý ${bulk.done}/${bulk.total}` : `Gợi ý cho ${fixable.length} mục`}
             </button>
+            {kind === "product" && (
+              <button type="button" onClick={bulkFaq} disabled={!!bulk || !needFaq.length} className={btnCls.secondary}>
+                <MessageCircleQuestion size={16} /> FAQ cho {needFaq.length} SP
+              </button>
+            )}
             {pendingSave.length > 0 && !bulk && (
               <button type="button" onClick={bulkSave} className={btnCls.secondary}>
                 <Save size={16} /> Lưu tất cả ({pendingSave.length})
@@ -232,10 +324,11 @@ export default function SeoBoard({ rows, kind, initialIssue }: { rows: SeoRow[];
             const d = draftOf(r);
             const isOpen = !!open[r.id];
             const hasDraft = !!drafts[r.id];
+            const fd = faqDrafts[r.id];
             const gTitle = brand(d.metaTitle || r.name);
             const gDesc = d.metaDescription || r.googleDesc;
             return (
-              <li key={r.id} className={hasDraft ? "bg-violet-50/40" : ""}>
+              <li key={r.id} className={hasDraft || fd ? "bg-violet-50/40" : ""}>
                 <div className="flex items-start gap-3 px-4 py-3">
                   <span className={`mt-0.5 flex h-9 w-11 shrink-0 items-center justify-center rounded-lg text-sm font-bold tabular-nums ${scoreTone(r.score)}`}>
                     {r.score}
@@ -268,6 +361,18 @@ export default function SeoBoard({ rows, kind, initialIssue }: { rows: SeoRow[];
                       {busy[r.id] === "ai" ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                       <span className="hidden sm:inline">Gợi ý</span>
                     </button>
+                    {r.kind === "product" && r.issues.some((i) => i.code === "no_faq") && (
+                      <button
+                        type="button"
+                        onClick={() => suggestFaq(r)}
+                        disabled={!!busy[r.id] || !!bulk}
+                        className={`${btnCls.ghost} text-violet-700 hover:bg-violet-50`}
+                        title="Tạo câu hỏi thường gặp bằng AI"
+                      >
+                        {busy[r.id] === "faq" ? <Loader2 size={16} className="animate-spin" /> : <MessageCircleQuestion size={16} />}
+                        <span className="hidden sm:inline">FAQ</span>
+                      </button>
+                    )}
                     <button type="button" onClick={() => setOpen((o) => ({ ...o, [r.id]: !o[r.id] }))} className={btnCls.icon} title="Sửa nhanh">
                       <ChevronDown size={18} className={`transition ${isOpen ? "rotate-180" : ""}`} />
                     </button>
@@ -352,6 +457,57 @@ export default function SeoBoard({ rows, kind, initialIssue }: { rows: SeoRow[];
                           <ExternalLink size={16} /> Xem
                         </a>
                       </div>
+
+                      {/* ----- FAQ (sản phẩm) ----- */}
+                      {r.kind === "product" && (
+                        <div id={`faq-${r.id}`} className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="text-sm font-medium text-slate-700">
+                              Câu hỏi thường gặp{" "}
+                              <span className="font-normal text-slate-500">· đang có {r.faqQuestions.length} câu</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => suggestFaq(r)}
+                              disabled={!!busy[r.id] || !!bulk}
+                              className={`${btnCls.ghost} text-violet-700 hover:bg-violet-50`}
+                            >
+                              {busy[r.id] === "faq" ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                              {fd ? "Tạo lại" : r.faqQuestions.length ? "Tạo thêm 3 câu" : "Tạo 3 câu bằng AI"}
+                            </button>
+                          </div>
+                          {fd && (
+                            <div className="mt-3 space-y-3">
+                              <div className="flex items-center gap-1.5 text-xs font-medium text-violet-700">
+                                <Sparkles size={13} />
+                                {fd.source === "ai"
+                                  ? "FAQ do AI viết — kiểm tra kỹ thông số trước khi lưu"
+                                  : fd.aiError && fd.aiError !== "no-key"
+                                    ? `Câu hỏi mẫu — AI lỗi: ${fd.aiError}`
+                                    : "Câu hỏi mẫu theo chính sách chung (server chưa có key AI)"}
+                              </div>
+                              {fd.items.map((f, i) => (
+                                <div key={i} className="space-y-1.5 rounded-md border border-violet-100 bg-violet-50/40 p-2.5">
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      value={f.question}
+                                      onChange={(e) => editFaq(r.id, i, { question: e.target.value })}
+                                      className={`${inputCls} font-medium`}
+                                    />
+                                    <button type="button" onClick={() => removeFaq(r.id, i)} className={btnCls.danger} title="Bỏ câu này">
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                  <textarea rows={2} value={f.answer} onChange={(e) => editFaq(r.id, i, { answer: e.target.value })} className={inputCls} />
+                                </div>
+                              ))}
+                              <button type="button" onClick={() => saveFaq(r)} disabled={!!busy[r.id]} className={btnCls.primary}>
+                                {busy[r.id] === "save" ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Thêm {fd.items.length} câu vào sản phẩm
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* xem trước Google */}

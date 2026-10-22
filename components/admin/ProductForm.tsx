@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ExternalLink, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Plus, Save, Sparkles, Trash2 } from "lucide-react";
 import RichEditor from "@/components/RichEditor";
 import SeoSuggestButton from "./SeoSuggestButton";
 import { slugify } from "@/lib/slug";
@@ -151,6 +151,7 @@ export default function ProductForm({
 
   const attrs = useList(initial.attributes, markDirty);
   const faqs = useList(initial.faqs, markDirty);
+  const [faqBusy, setFaqBusy] = useState(false);
   const [spec, setSpec] = useState(
     initial.specTable && initial.specTable.columns.length
       ? initial.specTable
@@ -208,6 +209,42 @@ export default function ProductForm({
       window.history.replaceState(null, "", window.location.pathname);
     }
   }, [setToast]);
+
+  /** AI gợi ý FAQ từ nội dung đang nhập → thêm vào cuối danh sách (chưa lưu, admin đọc lại rồi Lưu) */
+  async function suggestFaqs() {
+    if (!name.trim()) return setToast({ type: "error", text: "Nhập tên sản phẩm trước đã" });
+    const f = formRef.current;
+    const val = (n: string) => f?.querySelector<HTMLInputElement>(`[name="${n}"]`)?.value || "";
+    const sel = f?.querySelector<HTMLSelectElement>('select[name="categoryId"]');
+    setFaqBusy(true);
+    try {
+      const res = await fetch("/api/ai/faq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          category: sel && sel.value ? sel.options[sel.selectedIndex].text.replace(/^(— )+/, "") : null,
+          short,
+          content: val("description"),
+          specs: SPECS.map((x) => (val(String(x.key)) ? `${x.label} ${val(String(x.key))}` : "")).filter(Boolean).join("; "),
+          warranty: val("warranty"),
+          existing: faqs.items.map((x) => x.question).filter(Boolean),
+          count: 3,
+        }),
+      });
+      const j = await res.json().catch(() => null);
+      if (!j?.ok || !j.faqs?.length) throw new Error(j?.error || "Không tạo được FAQ");
+      j.faqs.forEach((x: { question: string; answer: string }) => faqs.add(x));
+      setToast({
+        type: "success",
+        text: j.source === "ai" ? `Đã thêm ${j.faqs.length} câu do AI viết — đọc lại rồi Lưu` : `Đã thêm ${j.faqs.length} câu mẫu — chỉnh lại rồi Lưu`,
+      });
+    } catch (e: any) {
+      setToast({ type: "error", text: e?.message || "Lỗi tạo FAQ" });
+    } finally {
+      setFaqBusy(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -609,6 +646,18 @@ export default function ProductForm({
             id="faq"
             title="Câu hỏi thường gặp (FAQ)"
             desc="Hiển thị cuối trang sản phẩm và giúp Google hiểu nội dung. Câu hỏi/trả lời bỏ trống sẽ không được lưu."
+            actions={
+              <button
+                type="button"
+                disabled={faqBusy}
+                onClick={suggestFaqs}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 disabled:opacity-60"
+                title="AI viết 3 câu hỏi thường gặp từ thông tin sản phẩm đang nhập"
+              >
+                {faqBusy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+                Gợi ý 3 câu
+              </button>
+            }
           >
             <div className="space-y-3">
               {faqs.items.map((f, i) => (
