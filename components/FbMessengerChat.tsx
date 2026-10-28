@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 const PAGE_ID = process.env.NEXT_PUBLIC_FB_PAGE_ID;         // VD: '123456789012345'
 const LOCALE = process.env.NEXT_PUBLIC_FB_LOCALE || 'vi_VN'; // 'vi_VN' hoặc 'en_US'
-const THEME_COLOR = '#2653ED'; // tuỳ chọn, màu nút chat
+const THEME_COLOR = '#0A7282'; // tuỳ chọn, màu nút chat
 
 export default function FbMessengerChat() {
   useEffect(() => {

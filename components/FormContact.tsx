@@ -104,7 +104,7 @@ export default function ContactForm({ page }: { page?: string }) {
       <button
         type="submit"
         disabled={loading}
-        className="inline-flex items-center justify-center rounded-2xl px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+        className="inline-flex items-center justify-center rounded-full px-6 py-3 bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-dark)] disabled:opacity-60"
       >
         {loading ? 'Đang gửi...' : 'Gửi liên hệ'}
       </button>

@@ -1,6 +1,6 @@
-import { Settings, ShieldCheck, Truck, Wrench } from "lucide-react";
 import Link from "next/link";
 import WatermarkImage from "./WatermarkImage";
+import { formatPrice, hasPrice } from "@/lib/price";
 
 export type ProductCardData = {
   id: number;
@@ -12,139 +12,82 @@ export type ProductCardData = {
   category?: { id: number; name: string } | null;
 };
 
-function fmtVND(n?: number | null) {
-  if (typeof n !== "number" || !Number.isFinite(n)) return "";
-  return new Intl.NumberFormat("vi-VN").format(n);
-}
-
 function cldThumb(url: string | null, w = 600, h = 600) {
   if (!url) return null;
   try {
     const u = new URL(url);
-    if (
-      u.hostname.includes("res.cloudinary.com") &&
-      u.pathname.includes("/upload/")
-    ) {
-      return url.replace(
-        "/upload/",
-        `/upload/c_fit,f_auto,q_auto,dpr_auto,w_${w},h_${h}/`
-      );
+    if (u.hostname.includes("res.cloudinary.com") && u.pathname.includes("/upload/")) {
+      return url.replace("/upload/", `/upload/c_fit,f_auto,q_auto,dpr_auto,w_${w},h_${h}/`);
     }
-  } catch { }
+  } catch {}
   return url;
 }
 
 export default function ProductCard({ p }: { p: ProductCardData }) {
-  const hasPrice = typeof p.price === "number" && Number.isFinite(p.price);
   const imgUrl = cldThumb(p.coverImage, 600, 600);
 
-  const features = p.short
+  // Dòng mô tả ngắn đầu tiên (VD: "Năng suất 200–800 kg/h")
+  const firstLine = p.short
     ? p.short
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 2)
-    : [];
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean)[0]
+    : null;
 
   return (
-    <article className="group flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-[4px] hover:border-[var(--color-primary)]">
-
-      {/* IMAGE */}
-      <Link href={`/san-pham/${p.slug}`} className="relative block">
-        <div className="relative h-[200px] bg-white flex items-center justify-center overflow-hidden">
-
-          {imgUrl ? (
-            <WatermarkImage
-              src={imgUrl}
-              alt={p.name}
-              wrapperClassName="w-full h-full flex items-center justify-center"
-              className="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-105"
-              watermarkSize={28}
-              position="bottom-right"
-              opacity={0.6}
-            />
-          ) : (
-            <div className="text-sm text-gray-400">No image</div>
-          )}
-        </div>
+    <article className="group flex h-full flex-col">
+      {/* ẢNH */}
+      <Link
+        href={`/san-pham/${p.slug}`}
+        className="relative block [aspect-ratio:1/1] overflow-hidden rounded-[24px] bg-white"
+        aria-label={p.name}
+      >
+        {imgUrl ? (
+          <WatermarkImage
+            src={imgUrl}
+            alt={p.name}
+            wrapperClassName="flex h-full w-full items-center justify-center p-6"
+            className="max-h-full max-w-full object-contain transition duration-700 group-hover:scale-[1.04]"
+            watermarkSize={28}
+            position="bottom-right"
+            opacity={0.5}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-[var(--color-muted)]">
+            Chưa có ảnh
+          </div>
+        )}
       </Link>
 
-      {/* CONTENT - thêm flex-1 để chiếm hết chiều cao còn lại của card */}
-      <div className="flex flex-col flex-1 p-4">
-
-        {/* CATEGORY */}
+      {/* NỘI DUNG */}
+      <div className="flex flex-1 flex-col pt-4">
         {p.category && (
-          <div className="text-[11px] text-gray-400 uppercase tracking-wide mb-1">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
             {p.category.name}
           </div>
         )}
 
-        {/* TITLE - thêm min-h-[40px] để khoá cứng chiều cao dù 1 hay 2 dòng */}
-        <Link href={`/san-pham/${p.slug}`}>
-          <h2 className="text-[15px] font-semibold leading-snug text-gray-800 line-clamp-2 min-h-[40px] uppercase hover:text-[var(--color-primary)] transition">
+        <h2 className="font-display text-[19px] font-semibold leading-[1.2] tracking-[-0.02em] text-[var(--color-ink)]">
+          <Link href={`/san-pham/${p.slug}`} className="line-clamp-2 hover:text-[var(--color-primary)]">
             {p.name}
-          </h2>
-        </Link>
+          </Link>
+        </h2>
 
-        <div className="mt-2 min-h-[40px]">
-          {features.length > 0 ? (
-            <ul className="text-[13px] text-gray-600 space-y-1">
-              {features.map((f, i) => (
-                <li key={i} className="flex items-start gap-2">
+        {firstLine && (
+          <p className="mt-1.5 line-clamp-1 text-[14px] text-[var(--color-muted)]">{firstLine}</p>
+        )}
 
-                  <Wrench className="w-4 h-4 shrink-0 mt-[2px] text-[var(--color-accent)]" />
-
-                  <span className="line-clamp-1 leading-snug">
-                    {f}
-                  </span>
-
-                </li>
-              ))}
-            </ul>
-          ) : p.short ? (
-            <p className="text-[13px] text-gray-600 line-clamp-2">
-              {p.short}
-            </p>
-          ) : null}
-        </div>
-
-        {/* PRICE */}
-        <div className="mt-2 text-[15px] font-semibold text-[var(--color-primary-dark)]">
-          {hasPrice ? `${fmtVND(p.price)} ₫` : "Giá: Liên hệ"}
-        </div>
-
-        {/* TRUST */}
-
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[var(--color-accent)]" />
-          Hàng nhập khẩu
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Truck className="w-4 h-4 text-[var(--color-accent)]" />
-          Giao hàng toàn quốc
-        </div>
-
-        {/* CTA - thêm mt-auto để luôn dính đáy card */}
-        <div className="pt-3 flex gap-2 mt-auto">
-
-          {/* XEM CHI TIẾT */}
+        <div className="flex-1 min-h-4" />
+        <div className="flex items-center justify-between gap-3 border-t border-[var(--color-line)] pt-3.5">
+          <span className={`text-[15px] font-semibold ${hasPrice(p.price) ? "text-[var(--color-ink)]" : "text-[var(--color-primary)]"}`}>
+            {hasPrice(p.price) ? formatPrice(p.price) : "Liên hệ báo giá"}
+          </span>
           <Link
             href={`/san-pham/${p.slug}`}
-            className="flex-1 text-center py-2 rounded border border-gray-200 text-[13px] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition"
+            className="text-[14px] font-medium text-[var(--color-ink)] hover:text-[var(--color-primary)]"
           >
-            Xem chi tiết
+            Chi tiết →
           </Link>
-
-          {/* BÁO GIÁ */}
-          <a
-            href="https://zalo.me/0834551888"
-            target="_blank"
-            className="flex-1 text-center py-2 rounded bg-[var(--color-primary)] text-white text-[13px] font-semibold hover:bg-[var(--color-primary-dark)] transition"
-          >
-            Báo giá
-          </a>
-
         </div>
       </div>
     </article>

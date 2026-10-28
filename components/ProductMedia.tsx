@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ImageIcon, PlayCircle } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import WatermarkImage from "./WatermarkImage";
 import { isAllowedEmbed, isHttpUrl } from "@/lib/url";
 
@@ -59,118 +59,121 @@ export default function ProductMedia({
   // Chỉ nhúng iframe từ nguồn tin cậy (YouTube, Vimeo, Facebook…); nguồn khác hiện thành link
   const canEmbed = isAllowedEmbed(embedUrl);
 
+  // Ảnh thu nhỏ cho ô "Video": lấy từ YouTube nếu có, không thì dùng ô tối có biểu tượng play
+  const ytId = (() => {
+    if (!safeVideoUrl) return null;
+    const m =
+      safeVideoUrl.match(/youtu\.be\/([\w-]{6,})/) ||
+      safeVideoUrl.match(/[?&]v=([\w-]{6,})/) ||
+      safeVideoUrl.match(/\/(?:embed|shorts)\/([\w-]{6,})/);
+    return m ? m[1] : null;
+  })();
+  const videoThumb = ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : null;
+
+  // Dải ảnh thu nhỏ hiện khi có từ 2 ảnh trở lên, hoặc khi sản phẩm có video
+  const showStrip = gallery.length > 1 || hasVideo;
+
   return (
     <div className="space-y-3">
-      <div className="bg-white rounded-2xl border overflow-hidden shadow-sm">
-        {/* ===== TABS ===== */}
-        {hasVideo && (
-          <div className="flex border-b bg-gray-50">
-            <button
-              type="button"
-              onClick={() => setTab("image")}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition ${
-                tab === "image"
-                  ? "text-[var(--color-primary)] border-b-2 border-[var(--color-primary)] bg-white"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <ImageIcon className="w-4 h-4" />
-              Hình ảnh
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setTab("video")}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition ${
-                tab === "video"
-                  ? "text-[var(--color-primary)] border-b-2 border-[var(--color-primary)] bg-white"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <PlayCircle className="w-4 h-4" />
-              Video
-            </button>
-          </div>
-        )}
-
-        {/* ===== CONTENT ===== */}
-        <div className="relative w-full aspect-[4/3] bg-white overflow-hidden flex items-center justify-center">
-          {tab === "image" ? (
-            active?.url ? (
-              <WatermarkImage
-                src={active.url}
-                srcSet={active.url === mainImg ? mainSrcSet : undefined}
-                alt={active.alt || productName}
-                wrapperClassName="w-full h-full flex items-center justify-center"
-                className="max-w-full max-h-full object-contain"
-                watermarkSize={56}
-                position="bottom-right"
-                loading="eager"
-                sizes="(min-width: 1024px) 600px, 100vw"
+      {/* ===== KHUNG CHÍNH (không còn nút đè lên ảnh/video) ===== */}
+      <div
+        className={`relative flex [aspect-ratio:5/4] w-full items-center justify-center overflow-hidden rounded-[28px] ${
+          tab === "image" ? "bg-white p-6 md:p-10" : "bg-[#111111]"
+        }`}
+      >
+        {tab === "image" ? (
+          active?.url ? (
+            <WatermarkImage
+              src={active.url}
+              srcSet={active.url === mainImg ? mainSrcSet : undefined}
+              alt={active.alt || productName}
+              wrapperClassName="w-full h-full flex items-center justify-center"
+              className="max-w-full max-h-full object-contain"
+              watermarkSize={56}
+              position="bottom-right"
+              loading="eager"
+              sizes="(min-width: 1024px) 600px, 100vw"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[var(--color-muted)]">Chưa có ảnh</div>
+          )
+        ) : (
+          // Video dọc (Shorts/TikTok/Reels) hiển thị khung dọc ở giữa, video ngang lấp đầy khung
+          <div
+            className="relative h-full"
+            style={isShort ? { aspectRatio: "9 / 16", maxWidth: "100%" } : { width: "100%" }}
+          >
+            {isVideoFile ? (
+              <video src={safeVideoUrl!} controls playsInline className="absolute inset-0 h-full w-full object-contain" />
+            ) : canEmbed ? (
+              <iframe
+                src={embedUrl}
+                title={`Video ${productName}`}
+                className="absolute inset-0 h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                No image
-              </div>
-            )
-          ) : (
-            <div
-              className="relative w-full h-full bg-black"
-              style={isShort ? { maxWidth: 420, margin: "0 auto" } : undefined}
-            >
-              {isVideoFile ? (
-                <video
-                  src={safeVideoUrl!}
-                  controls
-                  className="absolute inset-0 w-full h-full object-contain"
-                />
-              ) : canEmbed ? (
-                <iframe
-                  src={embedUrl}
-                  className="absolute inset-0 w-full h-full"
-                  allowFullScreen
-                />
-              ) : (
-                <a
-                  href={safeVideoUrl!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute inset-0 flex items-center justify-center text-white underline"
-                >
-                  Xem video vận hành
-                </a>
-              )}
-            </div>
-          )}
-        </div>
+              <a
+                href={safeVideoUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute inset-0 flex items-center justify-center text-white underline"
+              >
+                Xem video vận hành
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* ===== THUMBNAILS (chỉ hiện khi có từ 2 ảnh trở lên) ===== */}
-      {tab === "image" && gallery.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+      {/* ===== DẢI ẢNH THU NHỎ + Ô VIDEO ===== */}
+      {showStrip && (
+        <div className="flex gap-3 overflow-x-auto pb-1" role="tablist" aria-label="Ảnh và video sản phẩm">
           {gallery.map((img, i) => {
-            const isActive = active?.url === img.url;
+            const isActive = tab === "image" && active?.url === img.url;
             return (
               <button
                 key={`${img.url}-${i}`}
                 type="button"
-                onClick={() => setActiveUrl(img.url)}
-                className={`shrink-0 w-16 h-16 rounded-lg border overflow-hidden bg-gray-50 transition ${
-                  isActive
-                    ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30"
-                    : "border-gray-200 hover:border-[var(--color-primary)]/50"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => {
+                  setTab("image");
+                  setActiveUrl(img.url);
+                }}
+                className={`h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-white p-1.5 transition ${
+                  isActive ? "border-[var(--color-ink)]" : "border-transparent hover:border-[var(--color-line)]"
                 }`}
                 aria-label={`Xem ảnh ${i + 1}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.url}
-                  alt={img.alt || productName}
-                  className="w-full h-full object-cover"
-                />
+                <img src={img.url} alt={img.alt || productName} className="h-full w-full object-contain" />
               </button>
             );
           })}
+
+          {hasVideo && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "video"}
+              onClick={() => setTab("video")}
+              aria-label="Xem video vận hành"
+              className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-[#111111] transition ${
+                tab === "video" ? "border-[var(--color-primary)]" : "border-transparent hover:border-[var(--color-line)]"
+              }`}
+            >
+              {videoThumb && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={videoThumb} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+              )}
+              <span className="relative flex h-full w-full flex-col items-center justify-center gap-1 text-white">
+                <PlayCircle className="h-6 w-6" />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em]">Video</span>
+              </span>
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 // app/tim-kiem/page.tsx
+import { formatPrice } from "@/lib/price";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -38,12 +39,8 @@ function buildHref(
 }
 
 function fmtVND(n?: number | null) {
-  if (typeof n !== "number") return "Liên hệ";
-  try {
-    return new Intl.NumberFormat("vi-VN").format(n) + "₫";
-  } catch {
-    return "Liên hệ";
-  }
+  // Giá 0 hoặc chưa nhập → "Liên hệ" (quy tắc chung trong lib/price.ts)
+  return formatPrice(n);
 }
 
 /* ------------------------ QUERIES ------------------------ */
@@ -193,7 +190,7 @@ export default async function GlobalSearch({
               name="q"
               defaultValue={q}
               placeholder="Nhập từ khóa… (tên sản phẩm / bài viết)"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
           <div className="sm:col-span-2">
@@ -237,7 +234,7 @@ export default async function GlobalSearch({
                     key={p.id}
                     className="group block rounded-lg overflow-hidden bg-white border border-gray-200 hover:shadow-md transition"
                   >
-                    <div className="aspect-[4/3] bg-gray-50 overflow-hidden">
+                    <div className="[aspect-ratio:4/3] bg-gray-50 overflow-hidden">
                       {p.coverImage ? (
                         <img
                           src={p.coverImage}
@@ -255,7 +252,7 @@ export default async function GlobalSearch({
                       <div className="text-[15px] font-bold text-gray-900">
                         {fmtVND(p.price)}
                       </div>
-                      <div className="text-sm md:text-[15px] font-medium text-gray-800 leading-snug line-clamp-2 group-hover:text-sky-700 transition">
+                      <div className="text-sm md:text-[15px] font-medium text-gray-800 leading-snug line-clamp-2 group-hover:text-[var(--color-primary)] transition">
                         {p.name}
                       </div>
                       {p.short && (
@@ -295,7 +292,7 @@ export default async function GlobalSearch({
                     href={`/tin-tuc/${a.slug}`}
                     className="group rounded-lg overflow-hidden bg-white border border-gray-200 hover:shadow-md transition"
                   >
-                    <div className="aspect-[16/9] bg-gray-50 overflow-hidden">
+                    <div className="[aspect-ratio:16/9] bg-gray-50 overflow-hidden">
                       {a.coverImage ? (
                         <img
                           src={a.coverImage}
@@ -310,7 +307,7 @@ export default async function GlobalSearch({
                       )}
                     </div>
                     <div className="p-3">
-                      <h3 className="font-semibold leading-snug group-hover:text-sky-700 line-clamp-2">
+                      <h3 className="font-semibold leading-snug group-hover:text-[var(--color-primary)] line-clamp-2">
                         {a.title}
                       </h3>
                       {a.excerpt && (
@@ -343,7 +340,7 @@ export default async function GlobalSearch({
                   key={p.id}
                   className="group block rounded-lg overflow-hidden bg-white border border-gray-200 hover:shadow-md transition"
                 >
-                  <div className="aspect-[4/3] bg-gray-50 overflow-hidden">
+                  <div className="[aspect-ratio:4/3] bg-gray-50 overflow-hidden">
                     {p.coverImage ? (
                       <img
                         src={p.coverImage}
@@ -361,7 +358,7 @@ export default async function GlobalSearch({
                     <div className="text-[15px] font-bold text-gray-900">
                       {fmtVND(p.price)}
                     </div>
-                    <div className="text-sm md:text-[15px] font-medium text-gray-800 leading-snug line-clamp-2 group-hover:text-sky-700 transition">
+                    <div className="text-sm md:text-[15px] font-medium text-gray-800 leading-snug line-clamp-2 group-hover:text-[var(--color-primary)] transition">
                       {p.name}
                     </div>
                     {p.short && (
@@ -417,7 +414,7 @@ export default async function GlobalSearch({
                   href={`/tin-tuc/${a.slug}`}
                   className="group rounded-lg overflow-hidden bg-white border border-gray-200 hover:shadow-md transition"
                 >
-                  <div className="aspect-[16/9] bg-gray-50 overflow-hidden">
+                  <div className="[aspect-ratio:16/9] bg-gray-50 overflow-hidden">
                     {a.coverImage ? (
                       <img
                         src={a.coverImage}
@@ -432,7 +429,7 @@ export default async function GlobalSearch({
                     )}
                   </div>
                   <div className="p-3">
-                    <h3 className="font-semibold leading-snug group-hover:text-sky-700 line-clamp-2">
+                    <h3 className="font-semibold leading-snug group-hover:text-[var(--color-primary)] line-clamp-2">
                       {a.title}
                     </h3>
                     {a.excerpt && (

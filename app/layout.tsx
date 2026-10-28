@@ -1,6 +1,20 @@
 // app/layout.tsx
 import type { Metadata } from "next";
+import { Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
+
+// Font giao diện mới (tự host qua next/font, có tiếng Việt, không chặn hiển thị)
+const fontSans = Inter({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-sans",
+  display: "swap",
+});
+const fontDisplay = Inter_Tight({
+  subsets: ["latin", "vietnamese"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 import Footer from "@/components/Footer";
 import CTA from "@/components/CTA";
@@ -38,10 +52,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang="vi" suppressHydrationWarning className={`${fontSans.variable} ${fontDisplay.variable}`}>
       <body
         suppressHydrationWarning
-        className="min-h-screen bg-surface text-gray-900 antialiased selection:bg-primary/10 selection:text-primary"
+        className="min-h-screen bg-surface font-sans text-ink antialiased"
       >
         {/* Trang /admin: ẩn header, footer, nút gọi, Zalo, GA của website */}
         <PublicOnly>

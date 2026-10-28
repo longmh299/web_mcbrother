@@ -81,7 +81,7 @@ export default function WarrantyShippingPolicyPage() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 space-y-12">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3">
+        <h1 className="display-lg mb-4 text-[clamp(32px,4.4vw,56px)]">
           Chính sách bảo hành & giao hàng
         </h1>
         <p className="text-gray-600">

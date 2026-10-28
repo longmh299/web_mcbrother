@@ -1,4 +1,4 @@
-// components/CTA.tsx
+// components/CTA.tsx — nút "Tư vấn qua Zalo" nổi ở góc màn hình
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 type Props = {
   zalo?: string;
   side?: "left" | "right";
-  size?: number;      // đường kính nút tròn
-  gap?: number;       // khoảng cách giữa các nút
+  size?: number; // chiều cao nút
+  gap?: number;
+  /** giữ lại cho tương thích với layout cũ (không còn dùng) */
   defaultOpen?: boolean;
   liftWhenFooter?: boolean;
 };
@@ -15,86 +16,42 @@ type Props = {
 export default function CTA({
   zalo = "0834551888",
   side = "right",
-  size = 56,
+  size = 52,
   gap = 12,
-  defaultOpen = true,
   liftWhenFooter = true,
 }: Props) {
-  const [open, setOpen] = useState(defaultOpen);
   const [lift, setLift] = useState(0);
 
-  const sideCls = side === "left" ? "left-4 md:left-6" : "right-4 md:right-6";
-  const alignCls = side === "right" ? "items-end" : "items-start";
-
-  // Né footer
+  // Né footer: khi footer hiện ra thì đẩy nút lên một chút
   useEffect(() => {
     if (!liftWhenFooter) return;
     const footer = document.querySelector("footer");
     if (!footer) return;
     const io = new IntersectionObserver(
-      (entries) => setLift(entries.some((e) => e.isIntersecting) ? size + gap + 20 : 0),
+      (entries) => setLift(entries.some((e) => e.isIntersecting) ? gap + 8 : 0),
       { rootMargin: "0px 0px -120px 0px" }
     );
     io.observe(footer);
     return () => io.disconnect();
-  }, [liftWhenFooter, size, gap]);
+  }, [liftWhenFooter, gap]);
 
-  const circle =
-    "rounded-full shadow-lg grid place-items-center select-none border bg-white " +
-    "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500";
+  const sideCls = side === "left" ? "left-4 md:left-6" : "right-4 md:right-6";
 
   return (
-    <aside
-      aria-label="CTA nhanh"
-      className={`fixed z-50 ${sideCls} flex flex-col ${alignCls} transition-[bottom] duration-200`}
-      style={{ bottom: `calc(${16 + lift}px + env(safe-area-inset-bottom))`, gap }}
+    <a
+      href={`https://zalo.me/${zalo}`}
+      target="_blank"
+      rel="noopener"
+      aria-label="Tư vấn qua Zalo"
+      className={`fixed z-50 ${sideCls} hidden items-center gap-2.5 md:flex rounded-full bg-[var(--color-ink)] px-5 text-[15px] font-medium text-white shadow-[0_10px_30px_rgba(0,0,0,0.18)] transition-[bottom,transform] duration-200 hover:-translate-y-0.5`}
+      style={{ height: size, bottom: `calc(${20 + lift}px + env(safe-area-inset-bottom))` }}
     >
-      {/* Nhóm nút mở rộng */}
-      <div
-        aria-hidden={!open}
-        className={`flex flex-col transition ${open ? "opacity-100 translate-y-0" : "opacity-0 pointer-events-none translate-y-2"}`}
-        style={{ gap }}
-      >
-        {/* Zalo */}
-        <a
-          href={`https://zalo.me/${zalo}`}
-          target="_blank"
-          rel="noopener"
-          aria-label="Nhắn Zalo"
-          title="Nhắn Zalo"
-          className={circle}
-          style={{ width: size, height: size, borderColor: "#2653ED" }}
-        >
-          <img
-            src="/images/zalo-logo.png"
-            alt="Zalo"
-            width={Math.round(size * 0.6)}
-            height={Math.round(size * 0.6)}
-            className="object-contain"
-            loading="eager"
-            decoding="async"
-          />
-        </a>
-      </div>
-
-      {/* Nút toggle đóng/mở */}
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className={`${circle} text-gray-700 hover:bg-gray-50`}
-        style={{ width: size, height: size, borderColor: "rgba(0,0,0,0.08)" }}
-        title={open ? "Thu gọn" : "Mở nhanh"}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          className="w-5 h-5 transition-transform"
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-          aria-hidden
-        >
-          <path d="M12 6l6 6H6l6-6z" fill="currentColor" />
-        </svg>
-      </button>
-    </aside>
+      <span className="relative flex h-2.5 w-2.5">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#3DDC84] opacity-60" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#3DDC84]" />
+      </span>
+      <span className="hidden sm:inline">Tư vấn qua Zalo</span>
+      <span className="sm:hidden">Zalo</span>
+    </a>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import WatermarkImage from "./WatermarkImage";
 import { cld } from "@/lib/cloudinary";
+import { formatPrice, hasPrice } from "@/lib/price";
 
 export type Item = {
   id: number;
@@ -11,6 +12,7 @@ export type Item = {
   name: string;
   short?: string | null;
   coverImage?: string | null;
+  price?: number | null;
 };
 
 function useSPV() {
@@ -39,56 +41,47 @@ type Props = {
 };
 
 function ProductSlide({ p }: { p: Item }) {
+  const firstLine = p.short?.split("\n").map((s) => s.trim()).filter(Boolean)[0];
   return (
-    <article className="h-full flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden transition duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[var(--color-primary)] group">
-      {/* IMAGE */}
-      <Link href={`/san-pham/${p.slug}`}>
-        <div className="aspect-[4/3] bg-white flex items-center justify-center overflow-hidden">
-          {p.coverImage ? (
-            <WatermarkImage
-              src={cld(p.coverImage, 480) ?? p.coverImage}
-              alt={p.name}
-              wrapperClassName="w-full h-full flex items-center justify-center"
-              className="w-full h-full object-contain p-3 transition duration-300 group-hover:scale-105"
-              watermarkSize={36}
-              position="bottom-right"
-            />
-          ) : (
-            <div className="text-gray-400 text-sm">No Image</div>
-          )}
-        </div>
+    <article className="group flex h-full flex-col">
+      {/* ẢNH */}
+      <Link
+        href={`/san-pham/${p.slug}`}
+        className="block [aspect-ratio:1/1] overflow-hidden rounded-[24px] bg-white"
+        draggable={false}
+      >
+        {p.coverImage ? (
+          <WatermarkImage
+            src={cld(p.coverImage, 560) ?? p.coverImage}
+            alt={p.name}
+            wrapperClassName="flex h-full w-full items-center justify-center p-6"
+            className="max-h-full max-w-full object-contain transition duration-700 group-hover:scale-[1.04]"
+            watermarkSize={30}
+            position="bottom-right"
+            opacity={0.5}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-[var(--color-muted)]">Chưa có ảnh</div>
+        )}
       </Link>
 
-      {/* CONTENT */}
-      <div className="p-4 sm:p-5 flex flex-col gap-2 flex-1">
-        <div className="text-[13px] text-[var(--color-primary-dark)] font-semibold">
-          Liên hệ
-        </div>
-
+      {/* NỘI DUNG */}
+      <div className="flex flex-1 flex-col pt-4">
         <Link
           href={`/san-pham/${p.slug}`}
-          className="text-[14px] sm:text-[15px] font-semibold text-slate-800 hover:text-[var(--color-primary)] line-clamp-2"
+          className="line-clamp-2 font-display text-[19px] font-semibold leading-[1.2] tracking-[-0.02em] text-[var(--color-ink)] hover:text-[var(--color-primary)]"
+          draggable={false}
         >
           {p.name}
         </Link>
-
-        {p.short && (
-          <p className="text-sm text-gray-600 line-clamp-2">{p.short}</p>
-        )}
-
-        <div className="mt-auto flex gap-2 pt-2">
-          <button
-            onClick={() => (window.location.href = "tel:0834551888")}
-            className="flex-1 text-[12px] sm:text-[13px] border border-gray-300 py-2 rounded hover:border-[var(--color-primary)]"
-          >
-            Gọi ngay
-          </button>
-
-          <Link
-            href={`/san-pham/${p.slug}`}
-            className="flex-1 text-[12px] sm:text-[13px] bg-[var(--color-primary)] text-white py-2 rounded text-center"
-          >
-            Xem chi tiết
+        {firstLine && <p className="mt-1.5 line-clamp-1 text-[14px] text-[var(--color-muted)]">{firstLine}</p>}
+        <div className="min-h-4 flex-1" />
+        <div className="flex items-center justify-between gap-3 border-t border-[var(--color-line)] pt-3.5">
+          <span className={`text-[15px] font-semibold ${hasPrice(p.price) ? "text-[var(--color-ink)]" : "text-[var(--color-primary)]"}`}>
+            {hasPrice(p.price) ? formatPrice(p.price) : "Liên hệ báo giá"}
+          </span>
+          <Link href={`/san-pham/${p.slug}`} className="text-[14px] font-medium hover:text-[var(--color-primary)]" draggable={false}>
+            Chi tiết →
           </Link>
         </div>
       </div>
@@ -187,18 +180,13 @@ export default function FeaturedSlider({
   const activeDot = index % (maxIndex + 1);
 
   return (
-    <section className="max-w-7xl xl:max-w-[1280px] mx-auto px-4 py-12 space-y-6">
+    <section className="space-y-10">
       {/* HEADER */}
-      <div className="flex items-end justify-between">
-        <h2 className="text-[22px] md:text-[26px] font-semibold text-slate-800">
-          {title}
-        </h2>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h2 className="display-lg text-[clamp(32px,4.2vw,56px)] text-[var(--color-ink)]">{title}</h2>
 
-        <Link
-          href={viewAllHref}
-          className="text-sm text-[var(--color-primary)] hover:underline"
-        >
-          Xem tất cả →
+        <Link href={viewAllHref} className="link-underline">
+          Xem tất cả sản phẩm
         </Link>
       </div>
 
@@ -225,7 +213,7 @@ export default function FeaturedSlider({
           {trackItems.map((p, i) => (
             <li
               key={`${p.id}-${i}`}
-              className="px-2 sm:px-3"
+              className="px-2.5 sm:px-3"
               style={{
                 flex: `0 0 ${slideWidth}%`,
                 maxWidth: `${slideWidth}%`,
@@ -240,17 +228,21 @@ export default function FeaturedSlider({
         {maxIndex > 0 && (
           <>
             <button
+              type="button"
+              aria-label="Sản phẩm trước"
               onClick={() =>
                 setIndex((i) => (i <= 0 ? (canLoop ? loopResetIndex - 1 : 0) : i - 1))
               }
-              className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-white border shadow"
+              className="absolute left-4 top-[34%] hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--color-ink)] text-xl text-white shadow-lg transition hover:bg-black sm:flex"
             >
               ‹
             </button>
 
             <button
+              type="button"
+              aria-label="Sản phẩm tiếp theo"
               onClick={() => setIndex((i) => i + 1)}
-              className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-full bg-white border shadow"
+              className="absolute right-4 top-[34%] hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--color-ink)] text-xl text-white shadow-lg transition hover:bg-black sm:flex"
             >
               ›
             </button>
@@ -264,11 +256,11 @@ export default function FeaturedSlider({
           {Array.from({ length: maxIndex + 1 }).map((_, i) => (
             <button
               key={i}
+              type="button"
+              aria-label={`Trang ${i + 1}`}
               onClick={() => setIndex(i)}
-              className={`h-2.5 rounded-full transition-all ${
-                i === activeDot
-                  ? "w-6 bg-[var(--color-primary)]"
-                  : "w-2.5 bg-gray-300"
+              className={`h-1.5 rounded-full transition-all ${
+                i === activeDot ? "w-8 bg-[var(--color-ink)]" : "w-1.5 bg-[var(--color-line)]"
               }`}
             />
           ))}

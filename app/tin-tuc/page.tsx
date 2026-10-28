@@ -177,384 +177,173 @@ export default async function NewsPage({
     categories,
   } = await getData(sp);
 
+  // Bài nổi bật: bài mới nhất ở trang 1, khi không lọc/tìm kiếm
+  const showFeatured = page === 1 && !q && !categoryId && items.length > 0;
+  const featured = showFeatured ? items[0] : null;
+  const rest = showFeatured ? items.slice(1) : items;
+
+  const pill = (active: boolean) =>
+    `shrink-0 rounded-full border px-4 py-2 text-[14px] transition ${
+      active
+        ? "border-[var(--color-ink)] bg-[var(--color-ink)] font-semibold text-white"
+        : "border-[var(--color-line)] font-medium hover:border-[var(--color-ink)]"
+    }`;
+
   return (
-    <section className="w-full bg-[var(--color-bg)]">
-
-      <div className="container px-4 lg:px-6 pt-10 pb-8 md:pt-14 md:pb-10">
-
-        {/* ================= HEADER ================= */}
-        <div className="mb-8 md:mb-10">
-
-          <p
-            className="
-              text-sm
-              font-medium
-              text-[var(--color-primary)]
-              uppercase
-              tracking-[0.18em]
-              mb-3
-            "
-          >
-            Blog & Kiến thức
+    <main className="bg-[var(--color-bg)] text-[var(--color-ink)]">
+      {/* ===== TIÊU ĐỀ ===== */}
+      <section className="mx-auto flex max-w-[1320px] flex-wrap items-end justify-between gap-6 px-4 pb-10 pt-14 md:px-8 md:pt-20">
+        <div className="space-y-5">
+          <span className="eyebrow">Kiến thức</span>
+          <h1 className="display-xl text-[clamp(40px,6vw,84px)]">Tin tức & kiến thức</h1>
+          <p className="max-w-[560px] text-[16px] leading-relaxed text-[var(--color-muted)]">
+            Kiến thức vận hành, tư vấn thiết bị và xu hướng công nghệ trong ngành chế biến — đóng gói thực phẩm.
           </p>
-
-          <h1
-            className="
-              text-3xl
-              md:text-5xl
-              font-bold
-              tracking-tight
-              text-slate-900
-            "
-          >
-            Tin tức
-          </h1>
-
-          <p
-            className="
-              mt-4
-              text-slate-600
-              max-w-2xl
-              leading-relaxed
-              text-[15px]
-              md:text-base
-            "
-          >
-            Kiến thức vận hành, tư vấn thiết bị và xu hướng công nghệ
-            trong ngành chế biến — đóng gói thực phẩm.
-          </p>
-
         </div>
 
-        {/* ================= MOBILE SEARCH ================= */}
-        <form
-          action="/tin-tuc"
-          className="
-            sm:hidden
-            mb-6
-            rounded-xl
-            border
-            border-gray-200
-            bg-white
-            p-3
-            shadow-sm
-          "
-        >
-          <div className="grid grid-cols-1 gap-2">
-
-            <input
-              type="text"
-              name="q"
-              defaultValue={q}
-              placeholder="Tìm bài viết..."
-              className="
-                w-full
-                rounded-lg
-                border
-                border-gray-200
-                px-3
-                py-2
-                text-sm
-                outline-none
-                transition
-                focus:border-[var(--color-primary)]
-              "
-            />
-
-            <select
-              name="categoryId"
-              defaultValue={categoryId ?? ""}
-              className="
-                w-full
-                rounded-lg
-                border
-                border-gray-200
-                px-3
-                py-2
-                text-sm
-                outline-none
-                transition
-                focus:border-[var(--color-primary)]
-              "
-            >
-              <option value="">Tất cả chuyên mục</option>
-
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="submit"
-              className="
-                rounded-lg
-                bg-[var(--color-primary)]
-                px-3
-                py-2
-                text-sm
-                text-white
-                transition
-                hover:bg-[var(--color-primary-dark)]
-              "
-            >
-              Tìm kiếm
-            </button>
-
-          </div>
+        {/* Tìm kiếm */}
+        <form action="/tin-tuc" className="flex w-full max-w-[380px] items-center gap-2 rounded-full border border-[var(--color-line)] bg-white p-1.5 pl-5">
+          {categoryId ? <input type="hidden" name="categoryId" value={categoryId} /> : null}
+          <label htmlFor="news-q" className="sr-only">Tìm bài viết</label>
+          <input
+            id="news-q"
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="Tìm bài viết..."
+            className="min-w-0 flex-1 bg-transparent text-[15px] outline-none"
+          />
+          <button type="submit" className="btn-pill-dark min-h-[40px] px-5 text-[14px] font-medium">
+            Tìm
+          </button>
         </form>
+      </section>
 
-        {/* ================= GRID ================= */}
-        {items.length === 0 ? (
-
-          <div className="text-gray-500">
-            Không có bài viết phù hợp.
-          </div>
-
-        ) : (
-
-          <div
-            className="
-              grid
-              grid-cols-1
-              sm:grid-cols-2
-              md:grid-cols-3
-              xl:grid-cols-4
-              gap-5
-              lg:gap-7
-            "
-          >
-
-            {items.map((n) => (
-
-              <Link
-                key={n.id}
-                href={`/tin-tuc/${n.slug}`}
-                className="
-                  group
-                  block
-                  overflow-hidden
-                  rounded-2xl
-                  border
-                  border-gray-200
-                  bg-white
-                  shadow-sm
-                  transition-all
-                  duration-300
-                  hover:-translate-y-1
-                  hover:shadow-2xl
-                  hover:border-cyan-300
-                "
-              >
-
-                {/* IMAGE */}
-                <div className="overflow-hidden bg-white">
-
-                  <div className="aspect-[4/3]">
-
-                    {n.coverImage ? (
-
-                      <img
-                        src={cldPost(n.coverImage) ?? undefined}
-                        alt={n.title}
-                        loading="lazy"
-                        className="
-                          h-full
-                          w-full
-                          object-contain
-                        "
-                      />
-
-                    ) : (
-
-                      <div
-                        className="
-                          flex
-                          h-full
-                          w-full
-                          items-center
-                          justify-center
-                          text-sm
-                          text-gray-400
-                        "
-                      >
-                        No Image
-                      </div>
-
-                    )}
-
-                  </div>
-
-                </div>
-
-                {/* CONTENT */}
-                <div className="p-4">
-
-                  {/* META */}
-                  <div
-                    className="
-                      flex
-                      flex-wrap
-                      items-center
-                      gap-x-2
-                      gap-y-1
-                      text-[12px]
-                      text-gray-500
-                    "
-                  >
-
-                    <time>{fmtDate(n.createdAt)}</time>
-
-                    {n.category?.name && (
-                      <>
-                        <span className="hidden sm:inline">•</span>
-
-                        <span
-                          className="
-                            inline-flex
-                            items-center
-                            rounded-full
-                            border
-                            border-gray-200
-                            bg-white
-                            px-2
-                            py-0.5
-                          "
-                        >
-                          {n.category.name}
-                        </span>
-                      </>
-                    )}
-
-                  </div>
-
-                  {/* TITLE */}
-                  <h3
-                    className="
-                      mt-2
-                      text-[16px]
-                      font-semibold
-                      leading-snug
-                      text-slate-900
-                      line-clamp-2
-                      transition
-                      group-hover:text-[var(--color-primary)]
-                    "
-                  >
-                    {n.title}
-                  </h3>
-
-                  {/* EXCERPT */}
-                  {n.excerpt && (
-                    <p
-                      className="
-                        mt-2
-                        text-[13px]
-                        leading-relaxed
-                        text-slate-600
-                        line-clamp-2
-                      "
-                    >
-                      {n.excerpt}
-                    </p>
-                  )}
-
-                </div>
-
+      {/* ===== CHUYÊN MỤC ===== */}
+      {categories.length > 0 && (
+        <div className="sticky top-20 z-30 border-y border-[var(--color-line)] bg-[rgba(246,244,239,0.95)] backdrop-blur-md">
+          <nav aria-label="Chuyên mục" className="mx-auto flex max-w-[1320px] gap-2 overflow-x-auto px-4 py-3 md:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <Link href={buildHref("/tin-tuc", { q })} className={pill(!categoryId)}>
+              Tất cả
+            </Link>
+            {categories.map((c) => (
+              <Link key={c.id} href={buildHref("/tin-tuc", { q, categoryId: c.id })} className={pill(categoryId === c.id)}>
+                {c.name}
               </Link>
-
             ))}
+          </nav>
+        </div>
+      )}
 
-          </div>
-
+      <section className="mx-auto max-w-[1320px] space-y-16 px-4 py-14 md:px-8 md:py-20">
+        {q && (
+          <p className="text-[15px] text-[var(--color-muted)]">
+            Kết quả cho “<strong className="text-[var(--color-ink)]">{q}</strong>” ·{" "}
+            <Link href={buildHref("/tin-tuc", { categoryId })} className="underline">Xoá tìm kiếm</Link>
+          </p>
         )}
 
-        {/* ================= PAGINATION ================= */}
+        {items.length === 0 ? (
+          <div className="rounded-[24px] bg-[var(--color-sand)] px-6 py-16 text-center text-[var(--color-muted)]">
+            Không có bài viết phù hợp.
+          </div>
+        ) : (
+          <>
+            {/* BÀI NỔI BẬT */}
+            {featured && (
+              <Link href={`/tin-tuc/${featured.slug}`} className="group grid items-center gap-8 md:grid-cols-[1.3fr_1fr] md:gap-12">
+                <div className="[aspect-ratio:16/10] overflow-hidden rounded-[32px] bg-[var(--color-sand)]">
+                  {featured.coverImage ? (
+                    <img
+                      src={cldPost(featured.coverImage, 1100, 690) ?? undefined}
+                      alt={featured.title}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
+                    />
+                  ) : null}
+                </div>
+                <div className="space-y-4">
+                  <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
+                    Mới nhất{featured.category?.name ? ` · ${featured.category.name}` : ""}
+                  </div>
+                  <h2 className="display-lg text-[clamp(28px,3.2vw,44px)] group-hover:text-[var(--color-primary)]">
+                    {featured.title}
+                  </h2>
+                  {featured.excerpt && (
+                    <p className="line-clamp-3 text-[17px] leading-relaxed text-[var(--color-muted)]">{featured.excerpt}</p>
+                  )}
+                  <time className="block text-[14px] text-[var(--color-muted)]">{fmtDate(featured.createdAt)}</time>
+                </div>
+              </Link>
+            )}
+
+            {/* LƯỚI BÀI VIẾT */}
+            {rest.length > 0 && (
+              <div className="grid gap-x-7 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+                {rest.map((n) => (
+                  <Link key={n.id} href={`/tin-tuc/${n.slug}`} className="group flex flex-col gap-4">
+                    <div className="[aspect-ratio:4/3] overflow-hidden rounded-[24px] bg-[var(--color-sand)]">
+                      {n.coverImage ? (
+                        <img
+                          src={cldPost(n.coverImage, 720, 540) ?? undefined}
+                          alt={n.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
+                      {n.category?.name || "Tin tức"}
+                    </div>
+                    <h3 className="line-clamp-2 font-display text-[23px] font-semibold leading-[1.2] tracking-[-0.025em] group-hover:text-[var(--color-primary)]">
+                      {n.title}
+                    </h3>
+                    {n.excerpt && (
+                      <p className="line-clamp-2 text-[15px] leading-relaxed text-[var(--color-muted)]">{n.excerpt}</p>
+                    )}
+                    <time className="text-[14px] text-[var(--color-muted)]">{fmtDate(n.createdAt)}</time>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ===== PHÂN TRANG ===== */}
         {totalPages > 1 && (
-
-          <nav
-            className="
-              mt-10
-              flex
-              items-center
-              justify-center
-              gap-2
-            "
-          >
-
+          <nav aria-label="Phân trang" className="flex items-center justify-center gap-2 pt-4">
             <Link
-              href={buildHref("/tin-tuc", {
-                q,
-                categoryId,
-                page: Math.max(1, page - 1),
-              })}
-              className={`
-                px-4 py-2 rounded-xl border text-sm transition
-                ${
-                  page === 1
-                    ? "opacity-40 pointer-events-none"
-                    : "bg-white hover:border-[var(--color-primary)]"
-                }
-              `}
+              href={buildHref("/tin-tuc", { q, categoryId, page: Math.max(1, page - 1) })}
+              className={`btn-pill border border-[var(--color-line)] px-5 font-medium ${page === 1 ? "pointer-events-none opacity-40" : "hover:border-[var(--color-ink)]"}`}
             >
               Trước
             </Link>
-
-            <div className="hidden sm:flex gap-2">
-
+            <div className="hidden gap-2 sm:flex">
               {Array.from({ length: totalPages }).map((_, i) => {
-                const p = i + 1;
-                const active = p === page;
-
+                const n = i + 1;
+                const active = n === page;
                 return (
                   <Link
-                    key={p}
-                    href={buildHref("/tin-tuc", {
-                      q,
-                      categoryId,
-                      page: p,
-                    })}
-                    className={`
-                      px-4 py-2 rounded-xl border text-sm transition
-                      ${
-                        active
-                          ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
-                          : "bg-white hover:border-[var(--color-primary)]"
-                      }
-                    `}
+                    key={n}
+                    href={buildHref("/tin-tuc", { q, categoryId, page: n })}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex h-12 w-12 items-center justify-center rounded-full text-[15px] transition ${
+                      active ? "bg-[var(--color-ink)] font-semibold text-white" : "border border-[var(--color-line)] hover:border-[var(--color-ink)]"
+                    }`}
                   >
-                    {p}
+                    {n}
                   </Link>
                 );
               })}
-
             </div>
-
             <Link
-              href={buildHref("/tin-tuc", {
-                q,
-                categoryId,
-                page: Math.min(totalPages, page + 1),
-              })}
-              className={`
-                px-4 py-2 rounded-xl border text-sm transition
-                ${
-                  page === totalPages
-                    ? "opacity-40 pointer-events-none"
-                    : "bg-white hover:border-[var(--color-primary)]"
-                }
-              `}
+              href={buildHref("/tin-tuc", { q, categoryId, page: Math.min(totalPages, page + 1) })}
+              className={`btn-pill border border-[var(--color-line)] px-5 font-medium ${page === totalPages ? "pointer-events-none opacity-40" : "hover:border-[var(--color-ink)]"}`}
             >
               Sau
             </Link>
-
           </nav>
-
         )}
-
-      </div>
-
-    </section>
+      </section>
+    </main>
   );
 }

@@ -224,7 +224,7 @@ export default async function NewsDetailPage({
   };
 
   return (
-    <div className="bg-[var(--color-bg)] text-slate-800">
+    <div className="bg-[var(--color-bg)] text-[var(--color-ink)]">
 
       {/* 🔥 JSON-LD SEO */}
       <script
@@ -244,47 +244,41 @@ export default async function NewsDetailPage({
         }}
       />
 
-      {/* ================= HERO ================= */}
-      <div className="relative w-full h-[200px] sm:h-[320px] md:h-[420px] overflow-hidden">
-        {post.coverImage && (
-          <img
-            src={cldBanner(post.coverImage) ?? undefined}
-            srcSet={cldBannerSet(post.coverImage)}
-            sizes="100vw"
-            alt={post.title}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
+      {/* ================= TIÊU ĐỀ BÀI VIẾT ================= */}
+      <header className="mx-auto max-w-[1320px] px-4 pt-10 md:px-8 md:pt-14">
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-[14px] text-[var(--color-muted)]">
+          <Link href="/" className="hover:text-[var(--color-ink)]">Trang chủ</Link>
+          <span className="px-1">/</span>
+          <Link href="/tin-tuc" className="hover:text-[var(--color-ink)]">Kiến thức</Link>
+          {post.category?.name && (
+            <>
+              <span className="px-1">/</span>
+              <span className="max-w-[200px] truncate sm:max-w-none">{post.category.name}</span>
+            </>
+          )}
+        </nav>
 
-        <div className="absolute inset-0 bg-black/60" />
+        <h1 className="display-lg mt-6 max-w-[1000px] text-[clamp(32px,4.8vw,68px)]">{post.title}</h1>
 
-        <div className="relative max-w-6xl mx-auto px-4 h-full flex flex-col justify-center text-white">
-          <div className="text-xs sm:text-sm mb-2 sm:mb-3 opacity-80 flex flex-wrap items-center gap-1">
-            <Link href="/" className="hover:underline">Trang chủ</Link>
-            <span>/</span>
-            <Link href="/tin-tuc" className="hover:underline">Tin tức</Link>
-            {post.category?.name && (
-              <>
-                <span>/</span>
-                <span className="truncate max-w-[160px] sm:max-w-none">
-                  {post.category.name}
-                </span>
-              </>
-            )}
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold leading-tight mb-3 sm:mb-4 line-clamp-3">
-            {post.title}
-          </h1>
-
-          <div className="text-xs sm:text-sm opacity-80">
-            {fmtDate(post.createdAt)} • {readingTime(content)} phút đọc
-          </div>
+        <div className="mt-5 text-[15px] text-[var(--color-muted)]">
+          {fmtDate(post.createdAt)} · {readingTime(content)} phút đọc
         </div>
-      </div>
+
+        {post.coverImage && (
+          <div className="mt-10 overflow-hidden rounded-[32px] bg-[var(--color-sand)]">
+            <img
+              src={cldBanner(post.coverImage) ?? undefined}
+              srcSet={cldBannerSet(post.coverImage)}
+              sizes="(min-width: 1320px) 1256px, 100vw"
+              alt={post.title}
+              className="max-h-[560px] w-full object-cover"
+            />
+          </div>
+        )}
+      </header>
 
       {/* ================= BODY ================= */}
-      <div className="max-w-7xl mx-auto px-4 py-8 sm:py-10 md:py-12 grid lg:grid-cols-[1fr_320px] gap-8 lg:gap-12">
+      <div className="mx-auto grid max-w-[1320px] gap-8 px-4 py-12 md:px-8 md:py-16 lg:grid-cols-[1fr_320px] lg:gap-16">
 
         {/* MAIN */}
         <div className="min-w-0">
@@ -304,7 +298,7 @@ export default async function NewsDetailPage({
                   <li key={h.id}>
                     <a
                       href={`#${h.id}`}
-                      className="text-gray-600 hover:text-[var(--color-accent)] transition"
+                      className="text-gray-600 hover:text-[var(--color-primary)] transition"
                     >
                       {h.text}
                     </a>
@@ -316,7 +310,7 @@ export default async function NewsDetailPage({
 
           {/* SUMMARY */}
           {post.excerpt && (
-            <div className="mb-6 sm:mb-8 p-4 sm:p-5 bg-blue-50 border rounded-xl text-sm">
+            <div className="mb-8 rounded-[20px] bg-white p-5 text-[16px] leading-relaxed sm:p-6">
               <strong>Tóm tắt nhanh:</strong> {post.excerpt}
             </div>
           )}
@@ -327,15 +321,11 @@ export default async function NewsDetailPage({
           </div>
 
           {/* CTA */}
-          <div className="mt-12 sm:mt-16 bg-[var(--color-accent)] text-white rounded-2xl p-6 sm:p-8 text-center">
-            <h3 className="text-lg sm:text-xl font-semibold mb-3">
+          <div className="mt-14 flex flex-col justify-between gap-6 rounded-[28px] bg-[var(--color-ink)] p-8 text-[var(--color-bg)] sm:flex-row sm:items-center sm:p-10">
+            <h3 className="font-display text-[clamp(24px,2.6vw,34px)] font-semibold leading-[1.1] tracking-[-0.03em]">
               Cần tư vấn giải pháp phù hợp?
             </h3>
-
-            <Link
-              href="/lien-he"
-              className="bg-white text-black px-6 py-3 rounded-lg block sm:inline-block w-full sm:w-auto text-center font-medium"
-            >
+            <Link href="/lien-he" className="btn-pill-primary shrink-0">
               Liên hệ ngay
             </Link>
           </div>
@@ -355,7 +345,7 @@ export default async function NewsDetailPage({
                     <Link key={r.id} href={`/tin-tuc/${r.slug}`}>
                       <div className="group border rounded-2xl overflow-hidden hover:shadow-lg transition bg-white h-full flex flex-col">
 
-                        <div className="overflow-hidden bg-white aspect-[16/10]">
+                        <div className="overflow-hidden bg-white [aspect-ratio:16/10]">
                           {relImg ? (
                             <img
                               src={relImg}
@@ -376,7 +366,7 @@ export default async function NewsDetailPage({
                             {fmtDate(r.createdAt)}
                           </div>
 
-                          <div className="font-semibold line-clamp-2 group-hover:text-[var(--color-accent)]">
+                          <div className="font-semibold line-clamp-2 group-hover:text-[var(--color-primary)]">
                             {r.title}
                           </div>
                         </div>
@@ -405,7 +395,7 @@ export default async function NewsDetailPage({
                     <li key={h.id}>
                       <a
                         href={`#${h.id}`}
-                        className="text-gray-600 hover:text-[var(--color-accent)] transition"
+                        className="text-gray-600 hover:text-[var(--color-primary)] transition"
                       >
                         {h.text}
                       </a>

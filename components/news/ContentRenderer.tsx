@@ -112,9 +112,9 @@ export default function ContentRenderer({ html }: Props) {
                 : 'nofollow noopener noreferrer'
             }
             className="
-              text-blue-600
+              text-[var(--color-primary)]
               underline
-              hover:text-blue-800
+              hover:text-[var(--color-primary-dark)]
               transition
             "
           >
@@ -130,7 +130,7 @@ export default function ContentRenderer({ html }: Props) {
             id={node.attribs?.id}
             className="
               border-l-4
-              border-[var(--color-accent)]
+              border-[var(--color-primary)]
               pl-3
               mt-10
               mb-4
@@ -152,7 +152,7 @@ export default function ContentRenderer({ html }: Props) {
               my-6
               rounded-xl
               border
-              bg-blue-50
+              bg-white
               p-4
             "
           >
@@ -186,8 +186,8 @@ export default function ContentRenderer({ html }: Props) {
               my-6
               rounded
               border-l-4
-              border-blue-500
-              bg-blue-50
+              border-[var(--color-primary)]
+              bg-white
               p-4
             "
           >

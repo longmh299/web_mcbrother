@@ -2,8 +2,6 @@
 import { prisma } from '@/lib/prisma';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Check, Settings, Zap } from "lucide-react";
-import { ShieldCheck, Truck, BadgeCheck } from "lucide-react";
 import { cache } from "react";
 import ProductMedia from "@/components/ProductMedia";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -11,6 +9,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { findRedirect } from "@/lib/slug-redirect";
 import { abs } from "@/lib/site";
 import { brandTitle, metaDescription, absImage, breadcrumbJsonLd, ldJson, NO_IMAGE } from "@/lib/seo";
+import { formatPrice, hasPrice } from "@/lib/price";
+import { SITE } from "@/lib/site";
 /* ===================== CONFIG ===================== */
 // ĐỔI SANG ZALO CỦA BẠN
 const ZALO_URL = 'https://zalo.me/0834551888';
@@ -33,14 +33,6 @@ type SpecTable = {
 };
 
 /* ===================== HELPERS ===================== */
-
-function formatVND(n: number) {
-  try {
-    return new Intl.NumberFormat('vi-VN').format(n) + '₫';
-  } catch {
-    return `${n}₫`;
-  }
-}
 
 function cld(url?: string | null, w = 900, h = 600) {
   if (!url) return null;
@@ -169,16 +161,6 @@ export async function generateMetadata(
     },
   };
 }
-function PriceInline({
-  price,
-  noAnchor = false,
-}: {
-  price?: number | null;
-  noAnchor?: boolean;
-}) {
-  if (typeof price === 'number') return <>Giá: {formatVND(price)}</>;
-  return <span>Giá: Liên hệ</span>;
-}
 /* ===================== PAGE ===================== */
 
 export default async function ProductDetailPage(
@@ -270,8 +252,9 @@ export default async function ProductDetailPage(
     url: abs(`/san-pham/${p.slug}`),
     brand: { '@type': 'Brand', name: 'MCBROTHER' },
     category: p.category?.name || undefined,
+    // Chỉ khai báo giá cho Google khi có giá thật (> 0); giá 0 = "Liên hệ"
     offers:
-      typeof p.price === 'number'
+      hasPrice(p.price)
         ? {
           '@type': 'Offer',
           priceCurrency: 'VND',
@@ -312,7 +295,7 @@ export default async function ProductDetailPage(
   ]);
 
   return (
-    <main className="bg-[var(--color-bg)] text-slate-800">
+    <main className="bg-[var(--color-bg)] text-[var(--color-ink)]">
       {/* JSON-LD cho Google: thông tin sản phẩm + breadcrumb */}
       <script
         type="application/ld+json"
@@ -329,456 +312,257 @@ export default async function ProductDetailPage(
         />
       )}
 
-      {/* ===== HERO ===== */}
-      <section className="relative">
-        <img
-          src="https://res.cloudinary.com/ds55hfvx4/image/upload/f_auto,q_auto,c_limit,w_1920/v1778214441/ChatGPT_Image_11_26_29_8_thg_5_2026_vuknuv.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover"
+      {/* ===== BREADCRUMB ===== */}
+      <div className="mx-auto max-w-[1320px] px-4 pt-8 md:px-8">
+        <nav aria-label="Breadcrumb" className="text-[14px] text-[var(--color-muted)]">
+          <Link href="/" className="hover:text-[var(--color-ink)]">Trang chủ</Link>
+          <span className="px-2">/</span>
+          <Link href="/san-pham" className="hover:text-[var(--color-ink)]">Sản phẩm</Link>
+          {p.category && (
+            <>
+              <span className="px-2">/</span>
+              <Link href={`/${p.category.slug}`} className="hover:text-[var(--color-ink)]">
+                {p.category.name}
+              </Link>
+            </>
+          )}
+        </nav>
+      </div>
+
+      {/* ===== ẢNH + THÔNG TIN CHÍNH ===== */}
+      <section className="mx-auto grid max-w-[1320px] items-start gap-10 px-4 pt-8 md:px-8 lg:grid-cols-[1.25fr_1fr] lg:gap-16">
+        {/* TRÁI: ảnh / video */}
+        <ProductMedia
+          mainImg={mainImg}
+          mainSrcSet={mainSrcSet}
+          productName={p.name}
+          videoUrl={p.videoUrl}
+          images={galleryImages}
         />
-        <div className="absolute inset-0 bg-black/60" />
 
-        <div className="relative max-w-7xl xl:max-w-[1280px] mx-auto px-4 py-16 text-white">
+        {/* PHẢI: dính khi cuộn */}
+        <div className="flex h-fit flex-col gap-7 lg:sticky lg:top-28">
+          {p.category && <span className="eyebrow">{p.category.name}</span>}
 
-          {/* breadcrumb */}
-          <div className="text-sm text-white/80 mb-3">
-            <Link href="/" className="hover:underline">Trang chủ</Link>
-            <span className="px-2">/</span>
-            <Link href="/san-pham" className="hover:underline">Sản phẩm</Link>
-            {p.category && (
-              <>
-                <span className="px-2">/</span>
-                <Link href={`/${p.category.slug}`} className="hover:underline">
-                  {p.category.name}
-                </Link>
-              </>
-            )}
-          </div>
-
-          <h1 className="text-[28px] md:text-[34px] font-semibold leading-snug max-w-3xl">
-            {p.name}
-          </h1>
+          <h1 className="display-lg text-[clamp(32px,3.8vw,54px)] [text-wrap:balance]">{p.name}</h1>
 
           {p.short && (
-            <p className="mt-2 text-sm text-white/80 max-w-2xl">
-              {p.short}
-            </p>
+            <p className="whitespace-pre-line text-[17px] leading-relaxed text-[var(--color-muted)]">{p.short}</p>
           )}
-        </div>
-      </section>
 
-      {/* ===== CONTENT ===== */}
-      <section className="py-10">
-        <div className="max-w-7xl xl:max-w-[1280px] mx-auto px-4">
-
-          <div className="grid lg:grid-cols-2 gap-10">
-
-            {/* ===== LEFT ===== */}
-            <div className="space-y-6 lg:mt-[100px]">
-
-              {/* IMAGE + VIDEO */}
-              <ProductMedia
-                mainImg={mainImg}
-                mainSrcSet={mainSrcSet}
-                productName={p.name}
-                videoUrl={p.videoUrl}
-                images={galleryImages}
-              />
-
-            </div>
-
-            {/* ===== RIGHT (STICKY) ===== */}
-            <div className="space-y-6 lg:sticky top-24 h-fit">
-
-              {/* PRICE */}
-              <div className="text-[28px] font-bold text-[var(--color-primary-dark)]">
-                <PriceInline price={p.price} />
+          {/* GIÁ + NÚT */}
+          <div className="space-y-3 rounded-[24px] bg-white p-6">
+            {hasPrice(p.price) ? (
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">Giá</span>
+                <span className="font-display text-[28px] font-semibold tracking-[-0.02em] text-[var(--color-ink)]">
+                  {formatPrice(p.price)}
+                </span>
               </div>
-
-              {/* CTA */}
-              <div className="flex gap-3">
-                <a
-                  href={ZALO_URL}
-                  className="flex-1 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-center py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition"
-                >
-                  Nhận báo giá
-                </a>
-                <a
-
-                  href="tel:0834551888"
-                  className="flex-1 border border-[var(--color-border)] text-center py-3 rounded-xl hover:bg-gray-50 hover:shadow-sm hover:border-[var(--color-primary)] transition"
-                >
-                  Gọi ngay
-                </a>
+            ) : (
+              // Chưa có giá (giá = 0): không hiện chữ "Liên hệ" cỡ lớn, thay bằng lời mời báo giá
+              <div className="flex items-center gap-3">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-primary)]" />
+                <span className="text-[15px] leading-snug text-[var(--color-muted)]">
+                  Báo giá theo cấu hình, <strong className="font-semibold text-[var(--color-ink)]">phản hồi trong ngày</strong>
+                </span>
               </div>
-
-              {/* TRUST */}
-
-
-              <div className="bg-[var(--color-primary)]/5 border-[var(--color-primary)]/20 rounded-xl p-4 shadow-sm">
-                <div className="space-y-2 text-sm text-gray-700">
-
-                  <div className="flex items-center gap-2">
-                    <BadgeCheck className="w-4 h-4 text-[var(--color-accent)]" />
-                    Hàng chính hãng
-                  </div>
-
-                  {p.warranty !== "0 tháng" && (
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-[var(--color-accent)]" />
-                      Bảo hành {p.warranty || "12 tháng"}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-[var(--color-accent)]" />
-                    Giao hàng toàn quốc
-                  </div>
-
-                </div>
-              </div>
-
-              {/* SPECS */}
-              {(p.power || p.voltage || p.weight || p.dimensions || p.functions || p.material || p.attributes.length > 0) && (
-                <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm max-w-3xl">
-                  <h2 className="text-base font-bold mb-4 text-[var(--color-primary-dark)]">
-                    Thông số kỹ thuật
-                  </h2>
-
-                  {/* Sử dụng Grid chia 2 cột mượt mà, căn chỉnh đồng đều */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 text-sm text-gray-700">
-
-                    {p.power && (
-                      <div className="flex items-center py-3 border-b border-gray-100">
-                        <span className="w-1/3 text-gray-400 font-medium shrink-0">Công suất</span>
-                        <span className="w-2/3 text-gray-900 font-semibold pl-2">{p.power}</span>
-                      </div>
-                    )}
-
-                    {p.voltage && (
-                      <div className="flex items-center py-3 border-b border-gray-100">
-                        <span className="w-1/3 text-gray-400 font-medium shrink-0">Điện áp</span>
-                        <span className="w-2/3 text-gray-900 font-semibold pl-2">{p.voltage}</span>
-                      </div>
-                    )}
-
-                    {p.weight && (
-                      <div className="flex items-center py-3 border-b border-gray-100">
-                        <span className="w-1/3 text-gray-400 font-medium shrink-0">Cân nặng</span>
-                        <span className="w-2/3 text-gray-900 font-semibold pl-2">{p.weight}</span>
-                      </div>
-                    )}
-
-                    {p.dimensions && (
-                      <div className="flex items-center py-3 border-b border-gray-100">
-                        <span className="w-1/3 text-gray-400 font-medium shrink-0">Kích thước</span>
-                        <span className="w-2/3 text-gray-900 font-semibold pl-2">{p.dimensions}</span>
-                      </div>
-                    )}
-
-                    {p.material && (
-                      <div className="flex items-center py-3 border-b border-gray-100">
-                        <span className="w-1/3 text-gray-400 font-medium shrink-0">Vật liệu</span>
-                        <span className="w-2/3 text-gray-900 font-semibold pl-2">{p.material}</span>
-                      </div>
-                    )}
-
-                    {/* Rút các thuộc tính bổ sung vào chung luồng 2 cột */}
-                    {p.attributes.map((a, i) => (
-                      <div key={i} className="flex items-center py-3 border-b border-gray-100">
-                        <span className="w-1/3 text-gray-400 font-medium shrink-0">{a.name}</span>
-                        <span className="w-2/3 text-gray-900 font-semibold pl-2">{a.value}</span>
-                      </div>
-                    ))}
-
-                    {/* Đẩy Chức năng xuống cuối và cho chiếm trọn cả hàng để text dài hiển thị thoải mái nhất */}
-                    {p.functions && (
-                      <div className="flex items-start py-3 border-b border-gray-100 md:col-span-2">
-                        <span className="w-1/3 md:w-[16.6%] text-gray-400 font-medium shrink-0">Chức năng</span>
-                        <span className="w-2/3 md:w-[83.4%] text-gray-900 font-semibold pl-2">{p.functions}</span>
-                      </div>
-                    )}
-
-                  </div>
-                </div>
-              )}
-
-
-
-
-              <div className="bg-gray-50 border rounded-xl p-4 shadow-sm">
-                <ul className="space-y-2 text-sm text-gray-700">
-                  <li className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-yellow-500" />
-                    Lắp đặt &amp; hướng dẫn vận hành tận nơi
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-green-600" />
-                    Hỗ trợ kỹ thuật trọn đời máy
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-blue-600" />
-                    Có sẵn linh kiện thay thế chính hãng
-                  </li>
-                </ul>
-              </div>
-
+            )}
+            {/* Sang trang Liên hệ, tự điền sẵn tên máy vào form */}
+            <Link
+              href={`/lien-he?sp=${encodeURIComponent(p.name)}`}
+              className="btn-pill-primary w-full min-h-[54px] text-[16px]"
+            >
+              Nhận báo giá máy này
+            </Link>
+            <div className="grid grid-cols-2 gap-3">
+              <a href={`tel:${SITE.phone}`} className="btn-pill-outline">
+                <span className="sm:hidden">Gọi ngay</span>
+                <span className="hidden sm:inline">Gọi {SITE.phoneDisplay}</span>
+              </a>
+              <a href={ZALO_URL} target="_blank" rel="noopener" className="btn-pill-dark font-medium">
+                Nhắn Zalo
+              </a>
             </div>
           </div>
 
+          {/* CAM KẾT */}
+          <ul className="space-y-2.5 text-[15px] text-[#3A3833]">
+            <li className="flex items-center gap-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
+              Hàng chính hãng, có sẵn linh kiện thay thế
+            </li>
+            {p.warranty !== "0 tháng" && (
+              <li className="flex items-center gap-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
+                Bảo hành {p.warranty || "12 tháng"}
+              </li>
+            )}
+            <li className="flex items-center gap-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
+              Giao hàng, lắp đặt & hướng dẫn vận hành tận nơi
+            </li>
+            <li className="flex items-center gap-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
+              Hỗ trợ kỹ thuật trọn đời máy
+            </li>
+          </ul>
+        </div>
+      </section>
 
-          {/* ===== DESCRIPTION ===== */}
-          {(descHtml || hasSpecTable) && (
-            <section className="mt-12 space-y-6">
-              <h2 className="flex items-center gap-3 text-xl font-semibold tracking-tight text-gray-900">
-                <span className="h-6 w-1 rounded-full bg-[var(--color-primary)]" />
-                Mô tả chi tiết
-              </h2>
-
-              {/* ===== BẢNG SO SÁNH MODEL ===== */}
-              {hasSpecTable && specTable && (
-                <div>
-                  <h3 className="mb-3 text-[15px] font-semibold text-gray-700">Bảng so sánh model</h3>
-                  <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
-                    <table className="w-full min-w-[480px] border-collapse text-sm">
-                      <thead>
-                        <tr className="bg-[var(--color-primary-dark)] text-white">
-                          <th className="sticky left-0 z-10 bg-[var(--color-primary-dark)] px-4 py-3 text-left font-medium">
-                            Thông số
-                          </th>
-                          {specTable.columns.map((col, i) => (
-                            <th key={i} className="whitespace-nowrap px-4 py-3 text-center font-semibold">
-                              {col}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {specTable.rows.map((row, i) => (
-                          <tr
-                            key={i}
-                            className={`border-t border-gray-100 transition-colors hover:bg-cyan-50/60 ${
-                              i % 2 ? "bg-gray-50" : "bg-white"
-                            }`}
-                          >
-                            <td
-                              className={`sticky left-0 z-10 w-[32%] px-4 py-3 font-medium text-gray-500 ${
-                                i % 2 ? "bg-gray-50" : "bg-white"
-                              }`}
-                            >
-                              {row.label}
-                            </td>
-                            {specTable.columns.map((_, j) => (
-                              <td key={j} className="px-4 py-3 text-center font-semibold text-gray-900">
-                                {row.values?.[j] || <span className="text-gray-300">—</span>}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+      {/* ===== THÔNG SỐ KỸ THUẬT ===== */}
+      {(p.power || p.voltage || p.weight || p.dimensions || p.functions || p.material || p.attributes.length > 0) && (
+        <section className="mx-auto max-w-[1320px] px-4 pt-24 md:px-8 md:pt-32">
+          <div className="grid gap-10 lg:grid-cols-[1fr_1.6fr]">
+            <div className="space-y-4">
+              <span className="eyebrow">Thông số</span>
+              <h2 className="display-lg text-[clamp(30px,3.6vw,52px)]">Thông số kỹ thuật</h2>
+            </div>
+            <dl className="border-t border-[var(--color-line)] text-[16px]">
+              {[
+                { k: "Công suất", v: p.power },
+                { k: "Điện áp", v: p.voltage },
+                { k: "Cân nặng", v: p.weight },
+                { k: "Kích thước", v: p.dimensions },
+                { k: "Vật liệu", v: p.material },
+                ...p.attributes.map((a) => ({ k: a.name, v: a.value })),
+                { k: "Chức năng", v: p.functions },
+              ]
+                .filter((row) => row.v)
+                .map((row, i) => (
+                  <div key={i} className="grid grid-cols-[40%_1fr] gap-4 border-b border-[var(--color-line)] py-4">
+                    <dt className="text-[var(--color-muted)]">{row.k}</dt>
+                    <dd className="whitespace-pre-line font-semibold">{row.v}</dd>
                   </div>
-                </div>
-              )}
-
-              {/* ===== NỘI DUNG HTML (CMS) ===== */}
-              {descHtml && (
-                <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-                  <div
-                    className="
-    blog-content
-    prose
-    max-w-none
-    text-[15px]
-
-    [&_p]:!max-w-none
-    [&_h2]:!max-w-none
-    [&_h3]:!max-w-none
-    [&_ul]:!max-w-none
-    [&_ol]:!max-w-none
-    [&_table]:!w-full
-
-    prose-slate
-
-    prose-headings:text-[var(--color-primary-dark)]
-    prose-headings:font-semibold
-
-    prose-h2:mt-8
-    prose-h2:mb-3
-    first:prose-h2:mt-0
-    prose-h3:my-3
-
-    prose-p:my-3
-    prose-p:leading-7
-    prose-p:text-gray-700
-
-    prose-li:my-1
-    prose-li:leading-7
-    prose-li:text-gray-700
-
-    prose-table:border
-    prose-table:border-gray-200
-    prose-th:bg-gray-50
-    prose-th:font-semibold
-    prose-td:align-middle
-  "
-                    dangerouslySetInnerHTML={{ __html: descHtml }}
-                  />
-                </div>
-              )}
-            </section>
-          )}
-
-          {/* ===== FAQ ===== */}
-          {faqItems.length > 0 && (
-            <section className="mt-12 space-y-4">
-              <h2 className="flex items-center gap-3 text-xl font-semibold tracking-tight text-gray-900">
-                <span className="h-6 w-1 rounded-full bg-[var(--color-primary)]" />
-                Câu hỏi thường gặp
-              </h2>
-
-              <div className="space-y-3">
-                {faqItems.map((item, i) => (
-                  <details
-                    key={i}
-                    className="group rounded-xl border border-gray-200 bg-white shadow-sm transition open:border-[var(--color-primary)] open:shadow-md"
-                  >
-                    <summary className="flex cursor-pointer list-none items-center gap-4 px-5 py-4 font-medium text-gray-900 [&::-webkit-details-marker]:hidden">
-                      <span className="flex-1">{item.question}</span>
-                      <span
-                        aria-hidden
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-lg leading-none text-gray-500 transition group-open:rotate-45 group-open:bg-[var(--color-primary)] group-open:text-white"
-                      >
-                        +
-                      </span>
-                    </summary>
-                    <div className="whitespace-pre-line px-5 pb-5 text-[15px] leading-7 text-gray-600">
-                      {item.answer}
-                    </div>
-                  </details>
                 ))}
-              </div>
-            </section>
-          )}
+            </dl>
+          </div>
+        </section>
+      )}
 
-          {/* ===== RELATED ===== */}
-          {related.length > 0 && (
-            <div className="mt-14">
-              <h2 className="text-[20px] font-semibold mb-6 text-center">
-                Sản phẩm liên quan
-              </h2>
+      {/* ===== MÔ TẢ CHI TIẾT + BẢNG SO SÁNH MODEL ===== */}
+      {(descHtml || hasSpecTable) && (
+        <section className="mx-auto max-w-[1320px] space-y-10 px-4 pt-24 md:px-8 md:pt-32">
+          <div className="space-y-4">
+            <span className="eyebrow">Tổng quan</span>
+            <h2 className="display-lg text-[clamp(30px,3.6vw,52px)]">Mô tả chi tiết</h2>
+          </div>
 
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {related.map((rp) => {
-                  const features =
-                    rp.short
-                      ?.split("\n")
-                      .map((s) => s.trim())
-                      .filter(Boolean)
-                      .slice(0, 2) || [];
-
-                  return (
-                    <div
-                      key={rp.id}
-                      className="group flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-[4px] hover:border-[var(--color-primary)]"
-                    >
-                      {/* IMAGE */}
-                      <Link href={`/san-pham/${rp.slug}`} className="relative block">
-                        <div className="relative h-[180px] bg-white flex items-center justify-center overflow-hidden">
-                          <img
-                            src={rp.coverImage || NO_IMAGE}
-                            alt={rp.name}
-                            loading="lazy"
-                            className="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-105"
-                          />
-                        </div>
-                      </Link>
-
-                      {/* CONTENT */}
-                      <div className="flex flex-col p-4">
-
-                        {/* TITLE */}
-                        <Link href={`/san-pham/${rp.slug}`}>
-                          <h3 className="text-[14px] font-semibold leading-snug text-gray-800 line-clamp-2 hover:text-[var(--color-primary)] transition">
-                            {rp.name}
-                          </h3>
-                        </Link>
-
-                        {/* FEATURES */}
-
-                        <div className="mt-2 min-h-[40px]">
-                          {features.length > 0 && (
-                            <ul className="text-[12px] text-gray-600 space-y-1">
-                              {features.map((f, i) => {
-                                // chọn icon theo nội dung
-                                let Icon = Settings;
-
-                                if (f.toLowerCase().includes("công suất")) Icon = Zap;
-                                else if (f.toLowerCase().includes("bền")) Icon = ShieldCheck;
-
-                                return (
-                                  <li key={i} className="flex items-start gap-2">
-                                    <Icon className="w-3.5 h-3.5 mt-[2px] shrink-0 text-[var(--color-primary)]" />
-                                    <span className="line-clamp-1 leading-snug">{f}</span>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          )}
-                        </div>
-
-                        {/* PRICE */}
-                        <div className="mt-2 text-[14px] font-semibold text-[var(--color-primary-dark)]">
-                          <PriceInline price={rp.price} />
-                        </div>
-
-                        {/* TRUST */}
-                        <div className="mt-2 text-[11px] text-gray-500 space-y-1">
-
-                          <div className="flex items-center gap-2">
-                            <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-[var(--color-primary)]" />
-                            <span>Bảo hành 12 tháng</span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <Truck className="w-3.5 h-3.5 shrink-0 text-[var(--color-primary)]" />
-                            <span>Giao hàng toàn quốc</span>
-                          </div>
-
-                        </div>
-
-                        {/* CTA */}
-                        <div className="pt-3 flex gap-2 mt-auto">
-
-                          <Link
-                            href={`/san-pham/${rp.slug}`}
-                            className="flex-1 text-center py-2 rounded border border-gray-200 text-[12px] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition"
-                          >
-                            Xem chi tiết
-                          </Link>
-                          <a
-
-                            href="https://zalo.me/0834551888"
-                            target="_blank"
-                            className="flex-1 text-center py-2 rounded bg-[var(--color-primary)] text-white text-[12px] font-semibold hover:bg-[var(--color-primary-dark)] transition"
-                          >
-                            Báo giá
-                          </a>
-
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+          {hasSpecTable && specTable && (
+            <div>
+              <h3 className="mb-4 text-[17px] font-semibold">Bảng so sánh model</h3>
+              <div className="overflow-x-auto rounded-[24px] bg-white">
+                <table className="w-full min-w-[480px] border-collapse text-[15px]">
+                  <thead>
+                    <tr className="bg-[var(--color-ink)] text-white">
+                      <th className="sticky left-0 z-10 bg-[var(--color-ink)] px-5 py-4 text-left font-medium">Thông số</th>
+                      {specTable.columns.map((col, i) => (
+                        <th key={i} className="whitespace-nowrap px-5 py-4 text-center font-semibold">
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {specTable.rows.map((row, i) => (
+                      <tr key={i} className="border-t border-[var(--color-line)]">
+                        <td className="sticky left-0 z-10 w-[32%] bg-white px-5 py-4 text-[var(--color-muted)]">{row.label}</td>
+                        {specTable.columns.map((_, j) => (
+                          <td key={j} className="px-5 py-4 text-center font-semibold">
+                            {row.values?.[j] || <span className="text-[var(--color-line)]">—</span>}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
 
-        </div>
-      </section>
+          {descHtml && (
+            <div className="overflow-x-auto rounded-[28px] bg-white p-5 md:p-12">
+              <div
+                className="
+                  blog-content prose max-w-none text-[16px]
+                  [&_p]:!max-w-none [&_h2]:!max-w-none [&_h3]:!max-w-none [&_ul]:!max-w-none [&_ol]:!max-w-none [&_table]:!w-full
+                  prose-headings:font-display prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-[var(--color-ink)]
+                  prose-h2:mb-3 prose-h2:mt-10 first:prose-h2:mt-0 prose-h3:my-3
+                  prose-p:my-3 prose-p:leading-8 prose-p:text-[#3A3833]
+                  prose-li:my-1 prose-li:leading-8 prose-li:text-[#3A3833]
+                  prose-table:border prose-table:border-[var(--color-line)] prose-th:bg-[var(--color-bg)] prose-th:font-semibold prose-td:align-middle
+                "
+                dangerouslySetInnerHTML={{ __html: descHtml }}
+              />
+            </div>
+          )}
+        </section>
+      )}
 
+      {/* ===== HỎI ĐÁP ===== */}
+      {faqItems.length > 0 && (
+        <section className="mx-auto max-w-[1320px] px-4 pt-24 md:px-8 md:pt-32">
+          <div className="grid gap-10 lg:grid-cols-[1fr_1.6fr]">
+            <div className="space-y-4">
+              <span className="eyebrow">Hỏi đáp</span>
+              <h2 className="display-lg text-[clamp(30px,3.6vw,52px)]">Câu hỏi thường gặp</h2>
+            </div>
+            <div className="border-t border-[var(--color-line)]">
+              {faqItems.map((item, i) => (
+                <details key={i} className="group border-b border-[var(--color-line)] py-6">
+                  <summary className="flex cursor-pointer list-none items-center gap-6 font-display text-[20px] font-semibold tracking-[-0.015em] [&::-webkit-details-marker]:hidden">
+                    <span className="flex-1">{item.question}</span>
+                    <span
+                      aria-hidden
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-line)] text-xl leading-none transition group-open:rotate-45 group-open:border-[var(--color-ink)] group-open:bg-[var(--color-ink)] group-open:text-white"
+                    >
+                      +
+                    </span>
+                  </summary>
+                  <div className="whitespace-pre-line pt-4 text-[16px] leading-8 text-[var(--color-muted)]">{item.answer}</div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
+      {/* ===== SẢN PHẨM LIÊN QUAN ===== */}
+      {related.length > 0 && (
+        <section className="mx-auto max-w-[1320px] px-4 py-24 md:px-8 md:py-32">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+            <h2 className="display-lg text-[clamp(30px,3.6vw,52px)]">Sản phẩm liên quan</h2>
+            <Link href={p.category ? `/${p.category.slug}` : "/san-pham"} className="link-underline">
+              Xem tất cả
+            </Link>
+          </div>
+
+          <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+            {related.slice(0, 4).map((rp) => {
+              const line = rp.short?.split("\n").map((x) => x.trim()).filter(Boolean)[0];
+              return (
+                <Link key={rp.id} href={`/san-pham/${rp.slug}`} className="group flex flex-col">
+                  <div className="flex [aspect-ratio:1/1] items-center justify-center overflow-hidden rounded-[24px] bg-white p-6">
+                    <img
+                      src={cld(rp.coverImage, 600, 600) || NO_IMAGE}
+                      alt={rp.name}
+                      loading="lazy"
+                      className="max-h-full max-w-full object-contain mix-blend-multiply transition duration-700 group-hover:scale-[1.04]"
+                    />
+                  </div>
+                  <h3 className="mt-4 line-clamp-2 font-display text-[19px] font-semibold leading-[1.2] tracking-[-0.02em] group-hover:text-[var(--color-primary)]">
+                    {rp.name}
+                  </h3>
+                  {line && <p className="mt-1.5 line-clamp-1 text-[14px] text-[var(--color-muted)]">{line}</p>}
+                  <div className="mt-3 border-t border-[var(--color-line)] pt-3 text-[15px] font-semibold text-[var(--color-primary)]">
+                    {hasPrice(rp.price) ? formatPrice(rp.price) : "Liên hệ báo giá"}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

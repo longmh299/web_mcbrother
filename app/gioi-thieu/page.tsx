@@ -2,14 +2,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  BadgeCheck,
-  Building2,
   Clock,
   FlaskConical,
-  Mail,
-  MapPin,
   Package,
-  Phone,
   ShieldCheck,
   Sparkles,
   Truck,
@@ -117,273 +112,174 @@ export default function AboutPage() {
   };
 
   return (
-    <main className="bg-[var(--color-bg)] text-slate-800">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: ldJson(orgLd) }}
-      />
+    <main className="bg-[var(--color-bg)] text-[var(--color-ink)]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(orgLd) }} />
 
-      {/* ===== HERO ===== */}
-      <section className="relative overflow-hidden bg-[#dff6f7]">
-        <img
-          src="https://res.cloudinary.com/ds55hfvx4/image/upload/v1774489339/hero_banner_u2ziwq.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover opacity-20 scale-110"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/70 to-transparent" />
-
-        <div className="relative max-w-7xl xl:max-w-[1280px] mx-auto px-4 min-h-[460px] md:min-h-[540px] flex items-center">
-          <div className="w-full lg:w-3/5 z-10 py-12">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)]">
-              Về MCBROTHER
-            </p>
-
-            <h1 className="mt-3 text-[36px] md:text-[52px] leading-tight font-bold text-slate-800">
-              {COMPANY.name}
-            </h1>
-
-            <p className="mt-5 text-lg text-slate-600 max-w-xl leading-relaxed">
-              {COMPANY.slogan}
-            </p>
-
-            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
-              <span className="inline-flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-[var(--color-primary)]" />
-                Thành lập 10/04/2013
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <BadgeCheck className="w-4 h-4 text-[var(--color-primary)]" />
-                MST {SITE.taxCode}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[var(--color-primary)]" />
-                Bình Tân, TP.HCM
-              </span>
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/san-pham"
-                className="px-6 py-3 rounded-lg bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] transition"
-              >
-                Xem sản phẩm
-              </Link>
-              <Link
-                href="/lien-he"
-                className="px-6 py-3 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold bg-white/70 hover:bg-white transition"
-              >
-                Liên hệ tư vấn
-              </Link>
-            </div>
-          </div>
+      {/* ===== TIÊU ĐỀ ===== */}
+      <section className="mx-auto max-w-[1320px] space-y-7 px-4 pt-14 md:px-8 md:pt-20">
+        <span className="eyebrow">Về MCBROTHER · Từ {FOUNDED_YEAR}</span>
+        <h1 className="display-xl max-w-[1100px] text-[clamp(40px,6.4vw,92px)]">
+          {COMPANY.name}
+        </h1>
+        <p className="max-w-[680px] text-[18px] leading-relaxed text-[var(--color-muted)] md:text-[20px]">
+          {COMPANY.slogan}
+        </p>
+        <div className="flex flex-wrap gap-x-8 gap-y-2 text-[15px] text-[var(--color-muted)]">
+          <span>Thành lập {SITE.taxCodeIssuedAt}</span>
+          <span>MST {SITE.taxCode}</span>
+          <span>Bình Tân, TP.HCM</span>
         </div>
       </section>
 
-      {/* ===== ABOUT ===== */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl xl:max-w-[1280px] mx-auto px-4 grid lg:grid-cols-[1.15fr_0.85fr] gap-14 items-start">
-          {/* LEFT */}
-          <div>
-            <h2 className="text-[24px] font-semibold text-[var(--color-primary)]">
-              Về chúng tôi
-            </h2>
-
-            <p className="mt-4 text-gray-600 leading-relaxed">{COMPANY.summary}</p>
-
-            <div className="mt-4 text-gray-600 leading-relaxed space-y-3 text-[15px]">
-              <p>
-                Công ty cổ phần thiết bị MCBROTHER được thành lập ngày 10 tháng 4 năm 2013
-                với ngành nghề kinh doanh chính là:
-              </p>
-
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Máy, dây chuyền chế biến, đóng gói thực phẩm;</li>
-                <li>Máy chế biến, đóng gói dược phẩm;</li>
-                <li>Máy chế biến, đóng gói hóa mỹ phẩm;</li>
-                <li>Máy chế biến, đóng gói cho các ngành khác.</li>
-              </ul>
-
-              <p>
-                Với phương châm{" "}
-                <strong>&quot;Chất lượng - Chuẩn giá cả - Chuẩn dịch vụ&quot;</strong>, chúng
-                tôi luôn cố gắng hết mình để đem đến sự hài lòng cho Quý khách hàng và đã được
-                sự ủng hộ tin tưởng trong thời gian qua.
-              </p>
-
-              <p>
-                Với tinh thần cầu thị và học hỏi, đội ngũ chúng tôi luôn không ngừng hoàn thiện
-                và nâng cao trình độ chuyên môn để đáp ứng nhu cầu phục vụ khách hàng tốt nhất.
-              </p>
-
-              <p>
-                Chúng tôi xin chân thành cảm ơn các khách hàng đã và đang tin cậy hợp tác cùng
-                chúng tôi, và luôn chào đón mở rộng hợp tác cùng Quý khách.
-              </p>
-            </div>
-          </div>
-
-          {/* RIGHT */}
-          <div className="lg:sticky lg:top-24">
-            <div className="relative overflow-hidden rounded-2xl border border-gray-100 shadow-xl bg-white">
-              <img
-                src="https://res.cloudinary.com/ds55hfvx4/image/upload/f_auto,q_auto,c_limit,w_900/v1778229923/ChatGPT_Image_15_45_05_8_thg_5_2026_gvhmuh.png"
-                loading="lazy"
-                alt="MCBROTHER JSC – máy chế biến và đóng gói thực phẩm"
-                className="w-full h-auto object-contain"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/10 via-transparent to-transparent pointer-events-none" />
-            </div>
-          </div>
+      {/* ===== ẢNH LỚN ===== */}
+      <section className="mx-auto max-w-[1320px] px-4 pt-12 md:px-8">
+        <div className="overflow-hidden rounded-[32px] bg-[var(--color-sand)]">
+          <img
+            src="https://res.cloudinary.com/ds55hfvx4/image/upload/f_auto,q_auto,c_limit,w_1600/v1778229923/ChatGPT_Image_15_45_05_8_thg_5_2026_gvhmuh.png"
+            alt="MCBROTHER JSC – máy chế biến và đóng gói thực phẩm"
+            className="max-h-[620px] w-full object-cover"
+          />
         </div>
+      </section>
 
-        {/* STATS */}
-        <div className="max-w-7xl xl:max-w-[1280px] mx-auto px-4 mt-14 grid grid-cols-2 md:grid-cols-4 gap-6">
+      {/* ===== SỐ LIỆU ===== */}
+      <section className="mx-auto max-w-[1320px] px-4 pt-10 md:px-8">
+        <div className="grid grid-cols-2 border-t border-[var(--color-line)] md:grid-cols-4">
           {STATS.map((s) => (
-            <div
-              key={s.label}
-              className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-            >
-              <div className="text-[28px] font-semibold text-[var(--color-primary)]">
-                {s.value}
-              </div>
-              <div className="mt-1 text-sm text-gray-600">{s.label}</div>
+            <div key={s.label} className="py-7">
+              <div className="font-display text-[clamp(32px,3.6vw,48px)] font-semibold tracking-[-0.04em]">{s.value}</div>
+              <div className="mt-1 text-[15px] text-[var(--color-muted)]">{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ===== LĨNH VỰC ===== */}
-      <section className="py-20 bg-[var(--color-bg)]">
-        <div className="max-w-7xl xl:max-w-[1280px] mx-auto px-4">
-          <div className="max-w-2xl">
-            <h2 className="text-[24px] font-semibold text-[var(--color-primary)]">
-              Lĩnh vực chúng tôi phục vụ
-            </h2>
-            <p className="mt-3 text-gray-600">
-              Thiết bị và giải pháp cho nhiều ngành sản xuất, từ xưởng nhỏ đến nhà máy.
-            </p>
-          </div>
-
-          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {FIELDS.map((f) => (
-              <div
-                key={f.title}
-                className="bg-white border border-gray-200 rounded-2xl p-6 transition hover:shadow-xl hover:border-[var(--color-primary)]"
-              >
-                <div className="w-12 h-12 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center">
-                  <f.icon className="w-6 h-6 text-[var(--color-primary)]" />
-                </div>
-                <h3 className="mt-4 font-semibold text-slate-800">{f.title}</h3>
-                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
+      {/* ===== CÂU CHUYỆN ===== */}
+      <section className="mx-auto grid max-w-[1320px] gap-10 px-4 py-24 md:px-8 md:py-32 lg:grid-cols-[1fr_1.4fr]">
+        <h2 className="display-lg text-[clamp(32px,3.8vw,54px)]">Về chúng tôi</h2>
+        <div className="space-y-5 text-[18px] leading-[1.75] text-[#3A3833]">
+          <p className="text-[20px] text-[var(--color-ink)]">{COMPANY.summary}</p>
+          <p>
+            Công ty cổ phần thiết bị MCBROTHER được thành lập ngày 10 tháng 4 năm 2013 với ngành nghề kinh
+            doanh chính là:
+          </p>
+          <ul className="space-y-1.5 pl-5 [list-style:disc]">
+            <li>Máy, dây chuyền chế biến, đóng gói thực phẩm;</li>
+            <li>Máy chế biến, đóng gói dược phẩm;</li>
+            <li>Máy chế biến, đóng gói hóa mỹ phẩm;</li>
+            <li>Máy chế biến, đóng gói cho các ngành khác.</li>
+          </ul>
+          <p>
+            Với phương châm <strong>&quot;Chất lượng - Chuẩn giá cả - Chuẩn dịch vụ&quot;</strong>, chúng tôi
+            luôn cố gắng hết mình để đem đến sự hài lòng cho Quý khách hàng và đã được sự ủng hộ tin tưởng
+            trong thời gian qua.
+          </p>
+          <p>
+            Với tinh thần cầu thị và học hỏi, đội ngũ chúng tôi luôn không ngừng hoàn thiện và nâng cao trình
+            độ chuyên môn để đáp ứng nhu cầu phục vụ khách hàng tốt nhất.
+          </p>
+          <p>
+            Chúng tôi xin chân thành cảm ơn các khách hàng đã và đang tin cậy hợp tác cùng chúng tôi, và luôn
+            chào đón mở rộng hợp tác cùng Quý khách.
+          </p>
         </div>
       </section>
 
-      {/* ===== QUY TRÌNH ===== */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl xl:max-w-[1280px] mx-auto px-4">
-          <h2 className="text-[24px] font-semibold text-[var(--color-primary)] mb-10">
-            Quy trình làm việc
-          </h2>
+      {/* ===== LĨNH VỰC ===== */}
+      <section className="mx-auto max-w-[1320px] px-4 pb-24 md:px-8 md:pb-32">
+        <div className="mb-10 space-y-4">
+          <span className="eyebrow">Lĩnh vực</span>
+          <h2 className="display-lg text-[clamp(32px,3.8vw,54px)]">Lĩnh vực chúng tôi phục vụ</h2>
+        </div>
+        <div className="grid border-t border-[var(--color-line)] sm:grid-cols-2 lg:grid-cols-4">
+          {FIELDS.map((f) => (
+            <div key={f.title} className="space-y-3 py-8 pr-8">
+              <f.icon className="h-6 w-6 text-[var(--color-primary)]" />
+              <h3 className="font-display text-[24px] font-semibold tracking-[-0.02em]">{f.title}</h3>
+              <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <div className="grid md:grid-cols-4 gap-6">
+      {/* ===== QUY TRÌNH (khối đen) ===== */}
+      <section className="bg-[var(--color-ink)] text-[var(--color-bg)]">
+        <div className="mx-auto max-w-[1320px] px-4 py-24 md:px-8 md:py-32">
+          <h2 className="display-lg max-w-[760px] text-[clamp(32px,4.4vw,60px)]">
+            Quy trình làm việc
+            <br />
+            <span className="text-[#8F8A80]">từ khảo sát đến bảo trì.</span>
+          </h2>
+          <ol className="mt-14 grid border-t border-[#3A3833] sm:grid-cols-2 lg:grid-cols-4">
             {METHODS.map((m) => (
-              <div
-                key={m.step}
-                className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-xl transition hover:border-[var(--color-primary)]"
-              >
-                <div className="text-[22px] font-bold text-[var(--color-primary)]">{m.step}</div>
-                <h3 className="mt-2 font-semibold">{m.title}</h3>
-                <p className="text-sm text-gray-600 mt-2">{m.desc}</p>
-              </div>
+              <li key={m.step} className="space-y-3 py-8 pr-8">
+                <span className="font-display text-[15px] text-[#5FC3CF]">{m.step}</span>
+                <h3 className="font-display text-[24px] font-semibold tracking-[-0.02em]">{m.title}</h3>
+                <p className="text-[15px] leading-relaxed text-[#B5B0A6]">{m.desc}</p>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
       {/* ===== CAM KẾT DỊCH VỤ ===== */}
-      <section className="py-20 bg-[var(--color-bg)]">
-        <div className="max-w-7xl xl:max-w-[1280px] mx-auto px-4">
-          <h2 className="text-[24px] font-semibold text-[var(--color-primary)]">
-            Cam kết dịch vụ
-          </h2>
-
-          <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {COMMITMENTS.map((c) => (
-              <div key={c.title} className="flex gap-4 rounded-xl border border-gray-200 bg-white p-5">
-                <c.icon className="w-6 h-6 shrink-0 text-[var(--color-primary)]" />
-                <div>
-                  <h3 className="font-semibold text-slate-800">{c.title}</h3>
-                  <p className="mt-1 text-sm text-gray-600 leading-relaxed">{c.desc}</p>
-                </div>
-              </div>
-            ))}
+      <section className="mx-auto max-w-[1320px] px-4 py-24 md:px-8 md:py-32">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+          <div className="space-y-4">
+            <span className="eyebrow">Cam kết</span>
+            <h2 className="display-lg text-[clamp(32px,3.8vw,54px)]">Cam kết dịch vụ</h2>
           </div>
-
-          <Link
-            href="/chinh-sach-bao-hanh-giao-hang"
-            className="mt-6 inline-block text-sm font-medium text-[var(--color-primary)] hover:underline"
-          >
-            Xem chi tiết chính sách bảo hành & giao hàng →
+          <Link href="/chinh-sach-bao-hanh-giao-hang" className="link-underline">
+            Chính sách bảo hành & giao hàng
           </Link>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {COMMITMENTS.map((c) => (
+            <div key={c.title} className="space-y-3 rounded-[24px] bg-white p-7">
+              <c.icon className="h-6 w-6 text-[var(--color-primary)]" />
+              <h3 className="font-display text-[20px] font-semibold tracking-[-0.015em]">{c.title}</h3>
+              <p className="text-[15px] leading-relaxed text-[var(--color-muted)]">{c.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ===== THÔNG TIN DOANH NGHIỆP ===== */}
-      <section className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-[24px] font-semibold text-[var(--color-primary)] text-center">
-            Thông tin doanh nghiệp
-          </h2>
-
-          <div className="mt-8 bg-white border border-gray-200 rounded-2xl shadow-sm divide-y">
-            {[
-              { icon: Building2, label: "Tên công ty", value: SITE.legalName },
-              { icon: BadgeCheck, label: "Mã số thuế", value: `${SITE.taxCode} (cấp ngày ${SITE.taxCodeIssuedAt})` },
-              { icon: MapPin, label: "Địa chỉ", value: SITE.address },
-              { icon: Phone, label: "Hotline", value: SITE.phoneDisplay, href: `tel:${SITE.phone}` },
-              { icon: Mail, label: "Email", value: SITE.email, href: `mailto:${SITE.email}` },
-            ].map((row) => (
-              <div key={row.label} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 px-6 py-4">
-                <div className="flex items-center gap-2 sm:w-44 shrink-0 text-sm text-gray-500">
-                  <row.icon className="w-4 h-4 text-[var(--color-primary)]" />
-                  {row.label}
-                </div>
-                {row.href ? (
-                  <a href={row.href} className="font-medium text-slate-800 hover:text-[var(--color-primary)]">
-                    {row.value}
-                  </a>
-                ) : (
-                  <div className="font-medium text-slate-800">{row.value}</div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <div className="mt-12 text-center">
-            <p className="text-gray-600 mb-4">
-              Bạn cần tư vấn thiết bị phù hợp cho dây chuyền sản xuất?
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <a
-                href={SITE.zaloUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block bg-[var(--color-primary)] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[var(--color-primary-dark)] transition"
-              >
-                Chat Zalo tư vấn
-              </a>
-              <Link
-                href="/lien-he"
-                className="inline-block border border-[var(--color-primary)] text-[var(--color-primary)] px-6 py-3 rounded-lg font-semibold hover:bg-[var(--color-primary)]/5 transition"
-              >
-                Gửi yêu cầu báo giá
-              </Link>
+      <section className="mx-auto grid max-w-[1320px] gap-10 px-4 pb-24 md:px-8 md:pb-32 lg:grid-cols-[1fr_1.4fr]">
+        <h2 className="display-lg text-[clamp(32px,3.8vw,54px)]">Thông tin doanh nghiệp</h2>
+        <dl className="border-t border-[var(--color-line)] text-[16px]">
+          {[
+            { label: "Tên công ty", value: SITE.legalName },
+            { label: "Mã số thuế", value: `${SITE.taxCode} (cấp ngày ${SITE.taxCodeIssuedAt})` },
+            { label: "Địa chỉ", value: SITE.address },
+            { label: "Hotline", value: SITE.phoneDisplay, href: `tel:${SITE.phone}` },
+            { label: "Email", value: SITE.email, href: `mailto:${SITE.email}` },
+          ].map((row) => (
+            <div key={row.label} className="grid grid-cols-[38%_1fr] gap-4 border-b border-[var(--color-line)] py-4">
+              <dt className="text-[var(--color-muted)]">{row.label}</dt>
+              {row.href ? (
+                <dd><a href={row.href} className="font-semibold hover:text-[var(--color-primary)]">{row.value}</a></dd>
+              ) : (
+                <dd className="font-semibold">{row.value}</dd>
+              )}
             </div>
+          ))}
+        </dl>
+      </section>
+
+      {/* ===== KÊU GỌI ===== */}
+      <section className="mx-auto max-w-[1320px] px-4 pb-24 md:px-8 md:pb-32">
+        <div className="flex flex-col justify-between gap-8 rounded-[32px] bg-[var(--color-primary)] p-[clamp(32px,6vw,80px)] text-white md:flex-row md:items-end">
+          <h2 className="display-lg max-w-[640px] text-[clamp(30px,4vw,56px)]">
+            Cần tư vấn thiết bị cho dây chuyền sản xuất?
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <a href={SITE.zaloUrl} target="_blank" rel="noopener noreferrer" className="btn-pill bg-white text-[var(--color-ink)] hover:bg-[var(--color-bg)]">
+              Chat Zalo tư vấn
+            </a>
+            <Link href="/lien-he" className="btn-pill border border-white font-medium text-white hover:bg-white/10">
+              Gửi yêu cầu báo giá
+            </Link>
           </div>
         </div>
       </section>

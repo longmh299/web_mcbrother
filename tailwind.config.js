@@ -23,11 +23,15 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#2653ED",
+          DEFAULT: "#0A7282",
           foreground: "#ffffff",
         },
-        accent: "#F5ED42",
-        surface: "#F8FAFC", // nền nhẹ cho full-bleed section
+        accent: "#D9A400",
+        surface: "#F6F4EF", // nền kem ấm
+        ink: "#111111",
+        sand: "#EAE6DD",
+        line: "#D6D1C6",
+        muted: "#55524C",
       },
       borderRadius: {
         xl: "0.875rem",
@@ -41,7 +45,10 @@ module.exports = {
       },
       fontFamily: {
         // nếu dùng next/font Inter: className="font-sans"
-        sans: ["Inter", "system-ui", "Segoe UI", "Roboto", "Arial", "sans-serif"],
+        // Font nạp bằng next/font trong app/layout.tsx (có hỗ trợ tiếng Việt)
+        sans: ["var(--font-sans)", "Inter", "system-ui", "Segoe UI", "Roboto", "Arial", "sans-serif"],
+        // Tiêu đề lớn: Inter Tight, chữ khít kiểu tối giản
+        display: ["var(--font-display)", "var(--font-sans)", "Inter", "system-ui", "sans-serif"],
       },
       transitionTimingFunction: {
         "soft-out": "cubic-bezier(.2,.8,.2,1)",

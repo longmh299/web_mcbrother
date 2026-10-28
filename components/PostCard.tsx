@@ -61,7 +61,7 @@ export default function PostCard({ p }: { p: PostCardData }) {
             </time>
           </div>
 
-          <h2 className="line-clamp-2 text-base font-semibold leading-snug group-hover:text-blue-600">
+          <h2 className="line-clamp-2 text-base font-semibold leading-snug group-hover:text-[var(--color-primary)]">
             {p.title}
           </h2>
 

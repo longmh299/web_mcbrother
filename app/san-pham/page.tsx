@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import CategoryMegaMenu from "@/components/CategoryMegaMenu";
-import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -61,70 +60,57 @@ export default async function ProductsPage() {
   const categories = await getCategoriesWithSamples();
 
   return (
-    <main className="bg-[var(--color-bg)] text-slate-800">
-
-      {/* ===== HERO ===== */}
-      <section className="relative overflow-hidden min-h-[340px]">
-        <img
-          src="https://res.cloudinary.com/ds55hfvx4/image/upload/f_auto,q_auto,c_limit,w_1920/v1784716674/banner_may_moc_cong_nghiep_fa8smo.webp"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/55 to-slate-900/20" />
-
-        <div className="relative max-w-7xl xl:max-w-[1280px] mx-auto px-4 min-h-[340px] flex items-center">
-          <div className="max-w-2xl text-white">
-            <p className="text-cyan-300 font-medium mb-3">Thiết bị công nghiệp</p>
-            <h1 className="text-[44px] md:text-[56px] leading-tight font-bold">
-              Tất cả sản phẩm
-            </h1>
-            <p className="mt-5 text-white/80 text-lg leading-relaxed">
-              Giải pháp máy chế biến — đóng gói tối ưu cho doanh nghiệp sản xuất thực phẩm.
-            </p>
-          </div>
+    <main className="bg-[var(--color-bg)] text-[var(--color-ink)]">
+      {/* ===== TIÊU ĐỀ ===== */}
+      <section className="mx-auto flex max-w-[1320px] flex-wrap items-end justify-between gap-6 px-4 pb-10 pt-14 md:px-8 md:pt-20">
+        <div className="space-y-5">
+          <span className="eyebrow">Sản phẩm</span>
+          <h1 className="display-xl text-[clamp(40px,6vw,84px)]">Tất cả sản phẩm</h1>
         </div>
+        <p className="max-w-[420px] text-[16px] leading-relaxed text-[var(--color-muted)]">
+          Giải pháp máy chế biến — đóng gói tối ưu cho doanh nghiệp sản xuất thực phẩm. Gọi hoặc gửi yêu cầu
+          để nhận báo giá trong ngày.
+        </p>
       </section>
 
-      {/* ===== QUICK NAV: DROPDOWN DANH MỤC ===== */}
+      {/* ===== THANH DANH MỤC ===== */}
       <CategoryMegaMenu categories={categories} />
 
-      {/* ===== CONTENT: GOM NHÓM THEO DANH MỤC ===== */}
-      <section className="py-10">
-        <div className="max-w-7xl xl:max-w-[1280px] mx-auto px-4 space-y-14">
-
-          {categories.length === 0 ? (
-            <div className="text-gray-500">Chưa có sản phẩm.</div>
-          ) : (
-            categories.map((cat) => (
-              <div key={cat.id} id={`cat-${cat.slug}`} className="scroll-mt-40">
-
-                {/* HEADER DANH MỤC */}
-                <div className="flex items-end justify-between mb-5">
-                  <h2 className="text-[22px] md:text-[26px] font-semibold text-[var(--color-primary-dark)]">
-                    {cat.name}
-                  </h2>
-
-                  <Link
-                    href={`/${cat.slug}`}
-                    className="flex items-center gap-1 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition shrink-0"
-                  >
-                    Xem thêm
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-
-                {/* GRID SẢN PHẨM MẪU */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                  {cat.items.map((p) => (
-                    <ProductCard key={p.id} p={{ ...p, category: { id: cat.id, name: cat.name } }} />
-                  ))}
-                </div>
-
+      {/* ===== GOM NHÓM THEO DANH MỤC ===== */}
+      <section className="mx-auto max-w-[1320px] space-y-20 px-4 py-14 md:px-8 md:py-20">
+        {categories.length === 0 ? (
+          <div className="text-[var(--color-muted)]">Chưa có sản phẩm.</div>
+        ) : (
+          categories.map((cat) => (
+            <div key={cat.id} id={`cat-${cat.slug}`} className="scroll-mt-40">
+              <div className="mb-8 flex items-end justify-between gap-4 border-t border-[var(--color-line)] pt-6">
+                <h2 className="display-lg text-[clamp(28px,3.2vw,44px)]">{cat.name}</h2>
+                <Link href={`/${cat.slug}`} className="link-underline shrink-0">
+                  Xem tất cả
+                </Link>
               </div>
-            ))
-          )}
 
+              <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {cat.items.map((p) => (
+                  <ProductCard key={p.id} p={{ ...p, category: { id: cat.id, name: cat.name } }} />
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </section>
+
+      {/* ===== KÊU GỌI TƯ VẤN ===== */}
+      <section className="mx-auto max-w-[1320px] px-4 pb-24 md:px-8">
+        <div className="flex flex-col justify-between gap-8 rounded-[32px] bg-[var(--color-ink)] p-[clamp(32px,5vw,72px)] text-[var(--color-bg)] md:flex-row md:items-center">
+          <h2 className="display-lg max-w-[620px] text-[clamp(28px,3.6vw,48px)]">
+            Chưa biết chọn máy nào?
+            <br />
+            <span className="text-[#8F8A80]">Kỹ thuật viên tư vấn miễn phí.</span>
+          </h2>
+          <a href="tel:0834551888" className="btn-pill-primary min-h-[54px] px-8 text-[16px]">
+            Gọi 0834 551 888
+          </a>
         </div>
       </section>
     </main>
