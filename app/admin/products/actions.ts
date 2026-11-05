@@ -143,6 +143,7 @@ function revalidateProduct(slug: string, oldSlug?: string) {
   revalidatePath('/san-pham');
   revalidatePath('/');
   revalidatePath(`/san-pham/${slug}`);
+  revalidatePath('/[slug]', 'page'); // làm mới các trang danh mục chứa sản phẩm
   if (oldSlug && oldSlug !== slug) revalidatePath(`/san-pham/${oldSlug}`);
 }
 

@@ -9,7 +9,7 @@ import { ImageOff } from 'lucide-react';
 import { abs } from '@/lib/site';
 import { brandTitle, metaDescription, absImage, breadcrumbJsonLd, ldJson } from '@/lib/seo';
 
-export const revalidate = 60;
+export const revalidate = 86400;
 
 type Params = { slug?: string };
 

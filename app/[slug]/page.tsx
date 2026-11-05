@@ -11,7 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 export const runtime = "nodejs";
 // ISR: cache trang danh mục, làm mới tối đa sau 60 giây
-export const revalidate = 60;
+export const revalidate = 3600;
 
 /* ================= SEO ================= */
 export async function generateMetadata(

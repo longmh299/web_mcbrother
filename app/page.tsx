@@ -9,7 +9,7 @@ import { SITE } from "@/lib/site";
 import { formatPrice, hasPrice } from "@/lib/price";
 import { cache } from "react";
 
-export const revalidate = 60;
+export const revalidate = 3600;
 export const runtime = "nodejs";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://mcbrother.com.vn";

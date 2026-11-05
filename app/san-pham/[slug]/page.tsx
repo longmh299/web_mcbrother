@@ -16,7 +16,7 @@ import { SITE } from "@/lib/site";
 const ZALO_URL = 'https://zalo.me/0834551888';
 /* ================================================== */
 
-export const revalidate = 60;
+export const revalidate = 86400;
 
 /* ===================== TYPES ===================== */
 

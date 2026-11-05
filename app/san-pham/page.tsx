@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export const runtime = "nodejs";
-export const revalidate = 60;
+export const revalidate = 3600;
 
 const SAMPLE_PER_CATEGORY = 4;
 
