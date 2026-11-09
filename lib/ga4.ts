@@ -128,7 +128,7 @@ function hostnameFilter() {
     .filter(Boolean);
   if (!list.length) {
     try {
-      const h = new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://mcbrother.com.vn").hostname.replace(/^www\./, "");
+      const h = new URL(process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://mcbrother.com.vn").hostname.replace(/^www\./, "");
       if (h && h !== "localhost") list.push(h, `www.${h}`);
     } catch {}
   }
