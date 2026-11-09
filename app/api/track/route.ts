@@ -3,22 +3,26 @@
 import { prisma } from "@/lib/prisma";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { isAdmin } from "@/lib/auth";
+import { isBotUA, isExcludedIp } from "@/lib/track-filter";
 
 export const runtime = "nodejs";
 
 const TYPES = new Set(["call", "zalo", "messenger", "email", "quote", "form"]);
-const BOT = /bot|crawl|spider|slurp|preview|headless|lighthouse|facebookexternalhit/i;
 
-// Header "x-track" cho biết lý do (xem ở tab Network khi kiểm tra): saved | skip-admin | skip-bot | ...
+// Header "x-track" cho biết lý do (xem ở tab Network khi kiểm tra): saved | skip-admin | skip-bot | skip-ip | ...
 const noContent = (why = "skip") => new Response(null, { status: 204, headers: { "x-track": why } });
 
 export async function POST(req: Request) {
   try {
     const ua = req.headers.get("user-agent") || "";
-    if (!ua || BOT.test(ua)) return noContent("skip-bot");
+    if (isBotUA(ua)) return noContent("skip-bot");
 
+    const ip = clientIp(req.headers);
     // tối đa 30 lượt / 10 phút / IP (chặn spam làm sai số liệu)
-    if (!rateLimit(`track:${clientIp(req.headers)}`, 30, 10 * 60 * 1000)) return noContent("skip-rate-limit");
+    if (!rateLimit(`track:${ip}`, 30, 10 * 60 * 1000)) return noContent("skip-rate-limit");
+
+    // Không đếm mạng nội bộ (IP loại trừ ở Admin > Lượt truy cập)
+    if (await isExcludedIp(ip)) return noContent("skip-ip");
 
     // Không đếm khi chính admin đang xem web
     if (await isAdmin()) return noContent("skip-admin");
