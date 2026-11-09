@@ -10,6 +10,7 @@ import {
   Package,
   Phone,
   Plus,
+  Users,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { auditAll, ISSUE_LABEL, scoreTone, type IssueCode } from "@/lib/seo-audit";
@@ -44,6 +45,7 @@ export default async function AdminHome() {
     recentProducts,
     recentPosts,
     leads7,
+    visits7,
   ] = await Promise.all([
     safe(() => prisma.product.count(), 0),
     safe(() => prisma.product.count({ where: live }), 0),
@@ -69,6 +71,7 @@ export default async function AdminHome() {
       [] as any[]
     ),
     safe(() => prisma.clickEvent.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 86400e3) } } }), 0),
+    safe(() => prisma.pageView.count({ where: { isEntry: true, createdAt: { gte: new Date(Date.now() - 7 * 86400e3) } } }), 0),
   ]);
 
   const stats = [
@@ -81,6 +84,7 @@ export default async function AdminHome() {
       tone: newContacts ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600",
     },
     { href: "/admin/products", label: "Sản phẩm", value: prodTotal, sub: `${prodLive} đang hiển thị`, icon: Package, tone: "bg-blue-50 text-blue-600" },
+    { href: "/admin/truy-cap?d=7", label: "Lượt truy cập", value: visits7, sub: "Khách thật trong 7 ngày (không tính bot)", icon: Users, tone: "bg-violet-50 text-violet-600" },
     { href: "/admin/thong-ke?d=7", label: "Lượt bấm liên hệ", value: leads7, sub: "Gọi, Zalo, báo giá… trong 7 ngày", icon: BarChart3, tone: "bg-cyan-50 text-cyan-700" },
     { href: "/admin/news", label: "Bài viết", value: postTotal, sub: postDraft ? `${postDraft} bản nháp` : "Không có bản nháp", icon: Newspaper, tone: "bg-amber-50 text-amber-600" },
   ];
@@ -131,7 +135,7 @@ export default async function AdminHome() {
       </div>
 
       {/* Số liệu */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
         {stats.map((s) => {
           const Icon = s.icon;
           return (

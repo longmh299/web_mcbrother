@@ -193,3 +193,32 @@ model ClickEvent {
   @@index([createdAt])
   @@index([type, createdAt])
 }
+/// Lượt xem trang của khách (bot Google & các bot khác, admin, IP loại trừ đều KHÔNG được ghi)
+model PageView {
+  id        Int      @id @default(autoincrement())
+  /// Đường dẫn trang, VD: /san-pham/may-hut-chan-khong-dz-400
+  page      String   @db.VarChar(300)
+  /// Mã ngẫu nhiên lưu trên trình duyệt khách (không phải thông tin cá nhân) → đếm số khách
+  visitorId String   @db.VarChar(40)
+  /// true = trang đầu tiên của 1 lượt truy cập (phiên) → đếm số lượt truy cập
+  isEntry   Boolean  @default(false)
+  /// Nguồn khách đến (chỉ ghi ở trang đầu phiên): google | facebook | zalo | youtube | tiktok | bing | coccoc | other | direct
+  source    String?  @db.VarChar(20)
+  /// Tên miền trang giới thiệu (VD: google.com.vn), chỉ ghi ở trang đầu phiên
+  referrer  String?  @db.VarChar(120)
+  /// mobile | desktop
+  device    String?  @db.VarChar(10)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([page, createdAt])
+  @@index([isEntry, createdAt])
+}
+
+/// IP không tính vào thống kê (mạng công ty, wifi nhà…). Hỗ trợ dấu * ở cuối, VD: 2402:800:6314:* hoặc 14.161.*
+model ExcludedIp {
+  id        Int      @id @default(autoincrement())
+  ip        String   @unique @db.VarChar(64)
+  note      String?  @db.VarChar(120)
+  createdAt DateTime @default(now())
+}

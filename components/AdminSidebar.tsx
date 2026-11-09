@@ -12,6 +12,7 @@ import {
   Inbox,
   BarChart3,
   SearchCheck,
+  Users,
   ExternalLink,
   LogOut,
   Menu,
@@ -26,6 +27,7 @@ const NAV = [
   { href: "/admin/news", label: "Tin tức", icon: Newspaper },
   { href: "/admin/news-categories", label: "Chuyên mục tin tức", icon: Tags },
   { href: "/admin/lien-he", label: "Liên hệ khách hàng", icon: Inbox, badgeKey: "contacts" as const },
+  { href: "/admin/truy-cap", label: "Lượt truy cập", icon: Users },
   { href: "/admin/thong-ke", label: "Thống kê liên hệ", icon: BarChart3 },
   { href: "/admin/seo", label: "Kiểm tra SEO", icon: SearchCheck },
 ];
