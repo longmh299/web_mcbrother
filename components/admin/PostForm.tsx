@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, ExternalLink, Loader2, Save, X } from "lucide-react";
 import NewsEditor from "@/components/NewsEditor";
 import SeoSuggestButton from "./SeoSuggestButton";
+import AiPostWriter from "./AiPostWriter";
 import { slugify } from "@/lib/slug";
 import { savePost } from "@/app/admin/news/actions";
 import { Card, CharCount, Field, ImagePicker, Switch, Toast, btnCls, inputCls, useToast } from "./ui";
@@ -116,6 +117,8 @@ export default function PostForm({
   const [excerpt, setExcerpt] = useState(initial.excerpt);
   const [cover, setCover] = useState(initial.coverImage);
   const [content, setContent] = useState(initial.content);
+  // AI viết xong → nạp lại trình soạn thảo với nội dung mới (TinyMCE chỉ đọc giá trị lúc mở)
+  const [editorSeed, setEditorSeed] = useState({ key: 0, html: initial.content });
   const [tags, setTags] = useState(initial.tags);
   const [published, setPublished] = useState(initial.published);
   const [metaTitle, setMetaTitle] = useState(initial.metaTitle);
@@ -243,6 +246,29 @@ export default function PostForm({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* ===================== CỘT CHÍNH ===================== */}
         <div className="min-w-0 space-y-6">
+          <AiPostWriter
+            postId={initial.id}
+            hasContent={!!title.trim() || content.replace(/<[^>]+>/g, "").trim().length > 0}
+            onError={(m) => setToast({ type: "error", text: m })}
+            onResult={(r, used) => {
+              setTitle(r.title);
+              if (slugAuto || isNew) setSlug(r.slug);
+              setExcerpt(r.excerpt);
+              setMetaTitle(r.metaTitle);
+              setMetaDesc(r.metaDescription);
+              if (r.tags.length) setTags(r.tags);
+              setContent(r.content);
+              setEditorSeed((s) => ({ key: s.key + 1, html: r.content }));
+              const sel = formRef.current?.querySelector<HTMLSelectElement>('select[name="categoryId"]');
+              if (sel && r.categoryId) sel.value = String(r.categoryId);
+              setDirty(true);
+              setToast({
+                type: "success",
+                text: `AI đã viết xong${used.length ? `, có gắn ${used.length} sản phẩm liên quan` : ""}. Đọc lại, thêm ảnh đại diện rồi bấm Lưu.`,
+              });
+            }}
+          />
+
           <Card>
             <div className="space-y-4">
               <input
@@ -316,8 +342,9 @@ export default function PostForm({
 
           <Card title="Nội dung bài viết" desc="Dán từ Word/ChatGPT được — hệ thống tự làm sạch định dạng. Dùng H2 cho các mục lớn, H3 cho mục nhỏ.">
             <NewsEditor
+              key={editorSeed.key}
               name="content"
-              value={initial.content}
+              value={editorSeed.html}
               height={640}
               bare
               onChange={(html) => {
