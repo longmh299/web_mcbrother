@@ -2,12 +2,9 @@
 // Đọc số liệu Google Analytics 4 (GA4 Data API) bằng tài khoản dịch vụ (service account).
 // Không cần thêm thư viện: tự ký JWT bằng `jose` rồi gọi REST API.
 //
-// Biến môi trường (chọn 1 trong 2 cách khai tài khoản):
-//   GA_PROPERTY_ID=123456789                       ← GA > Quản trị > Chi tiết tài sản (dãy số, KHÔNG phải G-XXXX)
-//   GA_CLIENT_EMAIL=xxx@yyy.iam.gserviceaccount.com
-//   GA_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-// hoặc
-//   GA_SERVICE_ACCOUNT_JSON='{"client_email":"...","private_key":"..."}'   (dán nguyên file JSON tải về)
+// Biến môi trường (giống web quản lý kho):
+//   GA4_PROPERTY_ID=123456789          ← GA > Quản trị > Chi tiết tài sản (dãy số, KHÔNG phải G-XXXX)
+//   GA4_CREDENTIALS_JSON={...}         ← dán nguyên file JSON của tài khoản dịch vụ (hoặc bản mã hoá base64)
 // Tuỳ chọn:
 //   GA_HOSTNAMES=mcbrother.com.vn,www.mcbrother.com.vn   ← chỉ tính lượt có tên miền này (loại spam "ghost")
 import { importPKCS8, SignJWT } from "jose";
@@ -18,36 +15,56 @@ const API = "https://analyticsdata.googleapis.com/v1beta";
 
 export class GaConfigError extends Error {}
 
-function readCreds() {
-  let email = process.env.GA_CLIENT_EMAIL || "";
-  let key = process.env.GA_PRIVATE_KEY || "";
-  const json = process.env.GA_SERVICE_ACCOUNT_JSON;
-  if (json && (!email || !key)) {
+function parseJson(raw: string) {
+  let t = raw.trim();
+  if (/^'.*'$/s.test(t)) t = t.slice(1, -1); // bọc nháy đơn trong .env
+  if (!t.startsWith("{")) {
+    // có thể là base64
     try {
-      const j = JSON.parse(json);
-      email ||= j.client_email || "";
-      key ||= j.private_key || "";
+      const d = Buffer.from(t, "base64").toString("utf8").trim();
+      if (d.startsWith("{")) t = d;
+    } catch {}
+  }
+  return JSON.parse(t);
+}
+
+function readCreds() {
+  let email = "";
+  let key = "";
+  const json = process.env.GA4_CREDENTIALS_JSON;
+  if (json) {
+    try {
+      const j = parseJson(json);
+      email = j.client_email || "";
+      key = j.private_key || "";
     } catch {
-      throw new GaConfigError("GA_SERVICE_ACCOUNT_JSON không phải JSON hợp lệ");
+      throw new GaConfigError("GA4_CREDENTIALS_JSON không phải JSON hợp lệ (dán nguyên nội dung file .json của tài khoản dịch vụ)");
     }
   }
-  // Vercel/.env hay lưu xuống dòng thành "\n" dạng chữ, hoặc bọc thêm dấu nháy
-  key = key.trim().replace(/^"|"$/g, "").replace(/\\n/g, "\n");
-  const propertyId = (process.env.GA_PROPERTY_ID || "").replace(/^properties\//, "").trim();
+  // Vercel/.env hay lưu xuống dòng thành "\n" dạng chữ
+  key = key.trim().replace(/\\n/g, "\n");
+  const propertyId = (process.env.GA4_PROPERTY_ID || "").replace(/^properties\//, "").trim();
   const missing = [
-    !propertyId && "GA_PROPERTY_ID",
-    !email && "GA_CLIENT_EMAIL",
-    !key && "GA_PRIVATE_KEY",
+    !propertyId && "GA4_PROPERTY_ID",
+    (!email || !key) && "GA4_CREDENTIALS_JSON",
   ].filter(Boolean) as string[];
   return { email, key, propertyId, missing };
 }
 
 export function gaConfigured() {
-  return readCreds().missing.length === 0;
+  try {
+    return readCreds().missing.length === 0;
+  } catch {
+    return true; // biến có nhưng sai định dạng → để lỗi hiện ra khi gọi báo cáo
+  }
 }
 
 export function gaMissingEnv() {
-  return readCreds().missing;
+  try {
+    return readCreds().missing;
+  } catch {
+    return [];
+  }
 }
 
 let token: { value: string; exp: number } | null = null;
@@ -60,7 +77,7 @@ async function getToken() {
   try {
     pk = await importPKCS8(key, "RS256");
   } catch {
-    throw new GaConfigError("GA_PRIVATE_KEY sai định dạng (phải là khoá bắt đầu bằng -----BEGIN PRIVATE KEY-----)");
+    throw new GaConfigError("private_key trong GA4_CREDENTIALS_JSON sai định dạng");
   }
   const assertion = await new SignJWT({ scope: SCOPE })
     .setProtectedHeader({ alg: "RS256", typ: "JWT" })

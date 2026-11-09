@@ -556,8 +556,8 @@ function SetupGuide({ missing }: { missing: string[] }) {
           Lấy <strong>Mã tài sản</strong> (dãy số) ở GA → Quản trị → Chi tiết tài sản.
         </li>
         <li>
-          Vercel → Settings → Environment Variables, thêm <code>GA_PROPERTY_ID</code>, <code>GA_CLIENT_EMAIL</code>,{" "}
-          <code>GA_PRIVATE_KEY</code> (hoặc dán cả file JSON vào <code>GA_SERVICE_ACCOUNT_JSON</code>) → Redeploy.
+          Vercel → Settings → Environment Variables, thêm <code>GA4_PROPERTY_ID</code> và{" "}
+          <code>GA4_CREDENTIALS_JSON</code> (dán nguyên nội dung file JSON) → Redeploy.
         </li>
       </ol>
       <p className="mt-3 text-xs text-amber-800">Nếu web quản lý kho đã kết nối GA rồi thì dùng lại đúng tài khoản dịch vụ đó là được.</p>
