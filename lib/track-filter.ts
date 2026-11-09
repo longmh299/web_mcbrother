@@ -1,5 +1,5 @@
 // lib/track-filter.ts
-// Bộ lọc dùng chung cho /api/track (lượt bấm) và /api/pageview (lượt truy cập):
+// Bộ lọc dùng chung cho /api/track (lượt bấm liên hệ) và /api/ga-status (có tải Google Analytics không):
 //  - Bot: Googlebot và mọi crawler của Google, Bing, Facebook, Zalo, công cụ SEO…
 //  - IP loại trừ: mạng công ty / wifi nhà (quản lý ở Admin > Lượt truy cập, hoặc biến môi trường TRACK_EXCLUDE_IPS)
 import { prisma } from "@/lib/prisma";

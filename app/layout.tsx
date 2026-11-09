@@ -25,7 +25,6 @@ import { SITE_URL, SITE } from "@/lib/site";
 import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 import PublicOnly from "@/components/PublicOnly";
 import ClickTracker from "@/components/ClickTracker";
-import PageViewTracker from "@/components/PageViewTracker";
 
 export const metadata: Metadata = {
   // Gốc để Next tự đổi đường dẫn tương đối (ảnh OG, canonical) thành URL đầy đủ
@@ -62,7 +61,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PublicOnly>
           <GoogleAnalytics />
           <ClickTracker />
-          <PageViewTracker />
           <HeaderShell />
         </PublicOnly>
 
