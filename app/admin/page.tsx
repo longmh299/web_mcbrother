@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { gaConfigured, gaReports } from "@/lib/ga4";
 import { auditAll, ISSUE_LABEL, scoreTone, type IssueCode } from "@/lib/seo-audit";
 
 export const runtime = "nodejs";
@@ -71,7 +72,13 @@ export default async function AdminHome() {
       [] as any[]
     ),
     safe(() => prisma.clickEvent.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 86400e3) } } }), 0),
-    safe(() => prisma.pageView.count({ where: { isEntry: true, createdAt: { gte: new Date(Date.now() - 7 * 86400e3) } } }), 0),
+    safe(
+      async () =>
+        gaConfigured()
+          ? (await gaReports([{ dateRanges: [{ startDate: "6daysAgo", endDate: "today" }], metrics: ["sessions"] }]))[0][0]?.mets[0] ?? 0
+          : null,
+      null as number | null
+    ),
   ]);
 
   const stats = [
@@ -84,7 +91,7 @@ export default async function AdminHome() {
       tone: newContacts ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600",
     },
     { href: "/admin/products", label: "Sản phẩm", value: prodTotal, sub: `${prodLive} đang hiển thị`, icon: Package, tone: "bg-blue-50 text-blue-600" },
-    { href: "/admin/truy-cap?d=7", label: "Lượt truy cập", value: visits7, sub: "Khách thật trong 7 ngày (không tính bot)", icon: Users, tone: "bg-violet-50 text-violet-600" },
+    { href: "/admin/truy-cap?d=7", label: "Lượt truy cập", value: visits7 ?? 0, sub: visits7 === null ? "Chưa kết nối Google Analytics" : "Phiên truy cập 7 ngày (Google Analytics)", icon: Users, tone: "bg-violet-50 text-violet-600" },
     { href: "/admin/thong-ke?d=7", label: "Lượt bấm liên hệ", value: leads7, sub: "Gọi, Zalo, báo giá… trong 7 ngày", icon: BarChart3, tone: "bg-cyan-50 text-cyan-700" },
     { href: "/admin/news", label: "Bài viết", value: postTotal, sub: postDraft ? `${postDraft} bản nháp` : "Không có bản nháp", icon: Newspaper, tone: "bg-amber-50 text-amber-600" },
   ];

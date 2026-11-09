@@ -1,8 +1,10 @@
 "use client";
+// Google Analytics 4. Chỉ tải GA khi /api/ga-status cho phép:
+// không tải cho admin đang đăng nhập, mạng công ty đã loại trừ, và bot → số liệu GA sạch hơn.
 
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { GA_MEASUREMENT_ID, gaPageview } from "../lib/Gtag";
 
 function GaPageviewTracker() {
@@ -23,8 +25,22 @@ function GaPageviewTracker() {
   return null;
 }
 
+/** Hỏi server 1 lần mỗi lần tải trang (chuyển trang trong web không hỏi lại) */
+function useAllowed() {
+  const [ok, setOk] = useState<boolean | null>(null);
+  useEffect(() => {
+    if ((navigator as any).webdriver) return setOk(false); // trình duyệt tự động (bot, tool test)
+    fetch("/api/ga-status", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => setOk(j?.track !== false))
+      .catch(() => setOk(true)); // lỗi mạng → vẫn đếm như bình thường
+  }, []);
+  return ok;
+}
+
 export default function GoogleAnalytics() {
-  if (!GA_MEASUREMENT_ID) return null;
+  const allowed = useAllowed();
+  if (!GA_MEASUREMENT_ID || !allowed) return null;
 
   return (
     <>

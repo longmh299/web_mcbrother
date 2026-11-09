@@ -45,12 +45,3 @@ export async function removeExcludedIp(fd: FormData) {
   await prisma.excludedIp.delete({ where: { id } }).catch(() => {});
   refresh();
 }
-
-/** Xoá dữ liệu cũ đã lỡ ghi từ 1 visitorId (VD: máy của mình trước khi thêm IP) — không dùng IP vì không lưu IP */
-export async function deleteVisitorViews(fd: FormData) {
-  await requireAdmin();
-  const vid = String(fd.get("vid") ?? "");
-  if (!/^[a-z0-9-]{8,40}$/i.test(vid)) throw new Error("Mã không hợp lệ");
-  await prisma.pageView.deleteMany({ where: { visitorId: vid } });
-  refresh();
-}
