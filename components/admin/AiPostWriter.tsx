@@ -29,6 +29,8 @@ const TYPE_LABEL: Record<string, string> = {
   application: "Ứng dụng theo ngành",
   news: "Tin tức / xu hướng",
 };
+const HISTORY_KEY = "mcb_ai_ideas_shown";
+const HISTORY_MAX = 80;
 const LENGTH_LABEL: Record<string, string> = { short: "Ngắn (~800 từ)", medium: "Vừa (~1.300 từ)", long: "Dài (~1.800 từ)" };
 
 export default function AiPostWriter({
@@ -53,6 +55,22 @@ export default function AiPostWriter({
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [ideasBusy, setIdeasBusy] = useState(false);
   const [focus, setFocus] = useState("");
+  const [focusCats, setFocusCats] = useState<string[]>([]);
+  // các chủ đề đã gợi ý trước đó (lưu trên trình duyệt) → gửi lên để AI không lặp lại
+  const [history, setHistory] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      if (Array.isArray(v)) setHistory(v.filter((x) => typeof x === "string").slice(-HISTORY_MAX));
+    } catch {}
+  }, []);
+  const saveHistory = (list: string[]) => {
+    const v = list.slice(-HISTORY_MAX);
+    setHistory(v);
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(v));
+    } catch {}
+  };
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => () => void (timer.current && clearInterval(timer.current)), []);
@@ -89,11 +107,13 @@ export default function AiPostWriter({
       const res = await fetch("/api/ai/post-ideas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ focus }),
+        body: JSON.stringify({ focus, exclude: history.slice(-HISTORY_MAX) }),
       });
       const j = await res.json().catch(() => null);
       if (!res.ok || !j?.ok) throw new Error(j?.error || `Lỗi ${res.status}`);
       setIdeas(j.ideas);
+      setFocusCats(Array.isArray(j.focusCats) ? j.focusCats : []);
+      saveHistory([...history, ...j.ideas.map((i: Idea) => i.title)]);
     } catch (e: any) {
       onError(e?.message || "AI lỗi, thử lại.");
     } finally {
@@ -139,9 +159,24 @@ export default function AiPostWriter({
           />
           <button type="button" onClick={suggest} disabled={ideasBusy || busy} className={btnCls.secondary}>
             {ideasBusy ? <Loader2 size={15} className="animate-spin" /> : <Lightbulb size={15} />}
-            {ideasBusy ? "Đang nghĩ…" : "Gợi ý chủ đề"}
+            {ideasBusy ? "Đang nghĩ…" : ideas.length ? "Gợi ý khác" : "Gợi ý chủ đề"}
           </button>
         </div>
+        {(focusCats.length > 0 || history.length > 0) && (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+            <span>{focusCats.length > 0 && <>Lượt này xoay vào: {focusCats.join(", ")}. Bấm “Gợi ý khác” để sang danh mục khác.</>}</span>
+            {history.length > 0 && (
+              <button
+                type="button"
+                className="text-slate-400 underline-offset-2 hover:text-slate-600 hover:underline"
+                title="AI đang tránh lặp lại các chủ đề đã gợi ý. Xoá để cho phép gợi ý lại."
+                onClick={() => saveHistory([])}
+              >
+                Đã gợi ý {history.length} chủ đề · xoá lịch sử
+              </button>
+            )}
+          </div>
+        )}
         {ideas.length > 0 && (
           <ul className="mt-3 max-h-72 space-y-1.5 overflow-y-auto">
             {ideas.map((i) => (
