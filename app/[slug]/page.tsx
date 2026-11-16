@@ -107,10 +107,16 @@ export default async function CategoryPage(
   // ==========================
   // Lấy product
   // ==========================
-  const categoryIds =
-    children.length > 0
-      ? children.map((x) => x.id)
-      : [c.id];
+  // Lấy sản phẩm của chính danh mục + mọi danh mục con, cháu (site có 3 cấp).
+  // Trước đây chỉ lấy con trực tiếp → trang cấp 1 (VD "Ngành thực phẩm") báo
+  // "Chưa có sản phẩm" vì sản phẩm nằm ở cấp 3.
+  const grandChildren = children.length
+    ? await prisma.category.findMany({
+        where: { parentId: { in: children.map((x) => x.id) } },
+        select: { id: true },
+      })
+    : [];
+  const categoryIds = [c.id, ...children.map((x) => x.id), ...grandChildren.map((x) => x.id)];
 
   const products = await prisma.product.findMany({
     where: {
