@@ -77,6 +77,7 @@ const getHomepageData = cache(async () => {
         id: true,
         slug: true,
         name: true,
+        sku: true,
         short: true,
         coverImage: true,
         price: true,
@@ -126,6 +127,7 @@ const getHomepageData = cache(async () => {
         id: true,
         slug: true,
         name: true,
+        sku: true,
         short: true,
         coverImage: true,
         price: true,
@@ -133,10 +135,23 @@ const getHomepageData = cache(async () => {
     });
   }
 
+  // Lối tắt "Tìm máy theo nhu cầu": danh mục cuối (không có danh mục con) đang có sản phẩm hiển thị
+  const shortcuts = await prisma.category.findMany({
+    where: {
+      parentId: { not: null },
+      children: { none: {} },
+      products: { some: { published: true } },
+    },
+    orderBy: [{ order: "asc" }, { name: "asc" }],
+    take: 14,
+    select: { id: true, name: true, slug: true },
+  });
+
   return {
     products,
     categoriesHome,
     posts,
+    shortcuts,
   };
 });
 
@@ -157,14 +172,13 @@ const STEPS = [
 ];
 
 // Màu nền xen kẽ cho khung ảnh danh mục
-const TONES = ["bg-[var(--color-sand)]", "bg-[#1C1B19]", "bg-[#E3E6E2]"];
 
 function firstLine(s?: string | null) {
   return s?.split("\n").map((x) => x.trim()).filter(Boolean)[0] || null;
 }
 
 export default async function HomePage() {
-  const { products, categoriesHome, posts } = await getHomepageData();
+  const { products, categoriesHome, posts, shortcuts } = await getHomepageData();
   const hero = products.find((p) => p.coverImage) || products[0];
 
   return (
@@ -189,6 +203,26 @@ export default async function HomePage() {
             Nhận báo giá ngay
           </Link>
         </div>
+
+        {/* LỐI TẮT: tìm máy theo nhu cầu */}
+        {shortcuts.length > 0 && (
+          <nav aria-label="Tìm máy theo nhu cầu" className="mt-2 w-full max-w-[980px]">
+            <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">
+              Bạn đang cần máy gì?
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {shortcuts.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/${c.slug}`}
+                  className="rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-[14px] text-[var(--color-ink)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                >
+                  {c.name}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        )}
       </section>
 
       {/* ===== SẢN PHẨM NỔI BẬT: chữ bên trái, ảnh bên phải (mobile: ảnh trên, chữ dưới) ===== */}
@@ -220,6 +254,11 @@ export default async function HomePage() {
                 Sản phẩm nổi bật
               </span>
               <h2 className="display-lg text-[clamp(28px,3.4vw,48px)] [text-wrap:balance]">{hero.name}</h2>
+              {hero.sku && !hero.name.toLowerCase().includes(hero.sku.toLowerCase()) && (
+                <span className="rounded-full bg-[var(--color-sand)] px-3 py-1 text-[14px] font-medium text-[var(--color-ink)]">
+                  Model {hero.sku}
+                </span>
+              )}
               {firstLine(hero.short) && (
                 <p className="text-[17px] text-[var(--color-muted)]">{firstLine(hero.short)}</p>
               )}
@@ -265,7 +304,7 @@ export default async function HomePage() {
 
           <div className="flex flex-col">
             {categoriesHome.map((cat, i) => {
-              const img = cld(cat.ogImage || cat.banner, 900, 675, "fill") || "/images/no-image.jpg";
+              const img = cld(cat.ogImage || cat.banner, 900, 675) || "/images/no-image.jpg";
               return (
                 <Link
                   key={cat.id}
@@ -274,12 +313,12 @@ export default async function HomePage() {
                     i % 2 === 1 ? "md:flex-row-reverse" : "md:flex-row"
                   }`}
                 >
-                  <div className={`[aspect-ratio:4/3] w-full overflow-hidden rounded-[28px] md:w-[52%] ${TONES[i % TONES.length]}`}>
+                  <div className="[aspect-ratio:4/3] w-full overflow-hidden rounded-[28px] bg-white p-6 md:w-[52%] md:p-10">
                     <WatermarkImage
                       src={img}
                       alt={`${cat.name} MCBROTHER`}
-                      wrapperClassName="h-full w-full"
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                      wrapperClassName="flex h-full w-full items-center justify-center"
+                      className="max-h-full max-w-full object-contain transition duration-700 group-hover:scale-[1.04]"
                       watermarkSize={40}
                       position="bottom-right"
                       opacity={0.45}

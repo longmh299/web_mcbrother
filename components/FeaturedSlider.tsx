@@ -10,6 +10,7 @@ export type Item = {
   id: number;
   slug: string;
   name: string;
+  sku?: string | null;
   short?: string | null;
   coverImage?: string | null;
   price?: number | null;
@@ -74,6 +75,9 @@ function ProductSlide({ p }: { p: Item }) {
         >
           {p.name}
         </Link>
+        {p.sku && !p.name.toLowerCase().includes(p.sku.toLowerCase()) && (
+          <span className="mt-1.5 text-[13px] font-medium text-[var(--color-ink)]">Model {p.sku}</span>
+        )}
         {firstLine && <p className="mt-1.5 line-clamp-1 text-[14px] text-[var(--color-muted)]">{firstLine}</p>}
         <div className="min-h-4 flex-1" />
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-line)] pt-3.5">
