@@ -3,7 +3,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ImagePlus, Link2, Loader2, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Film, ImagePlus, Link2, Loader2, Trash2, Upload, X } from "lucide-react";
+import { MAX_IMAGE_MB, MAX_VIDEO_MB, cloudinaryVideoPoster, uploadMedia } from "@/lib/upload-client";
 
 /* ===================== Class dùng chung ===================== */
 
@@ -202,7 +203,7 @@ async function uploadToCloudinary(file: File, folder?: string): Promise<string> 
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
-  // Ưu tiên upload thẳng Cloudinary (unsigned preset); thiếu env thì đi qua /api/upload
+  // Có unsigned preset → upload thẳng; không thì xin chữ ký từ server rồi upload thẳng (lib/upload-client)
   if (cloudName && preset) {
     const fd = new FormData();
     fd.append("file", file);
@@ -213,12 +214,7 @@ async function uploadToCloudinary(file: File, folder?: string): Promise<string> 
     if (!res.ok || !json?.secure_url) throw new Error(json?.error?.message || "Tải ảnh thất bại");
     return json.secure_url;
   }
-  const fd = new FormData();
-  fd.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
-  const json = await res.json().catch(() => null);
-  if (!json?.ok || !json.url) throw new Error(json?.error || "Tải ảnh thất bại");
-  return json.url;
+  return uploadMedia(file, { kind: "image", folder });
 }
 
 function useUploader(folder?: string) {
@@ -226,9 +222,10 @@ function useUploader(folder?: string) {
   const upload = useCallback(
     async (files: File[], onDone: (url: string) => void) => {
       const imgs = files.filter((f) => f.type.startsWith("image/"));
-      const tooBig = imgs.filter((f) => f.size > 10 * 1024 * 1024);
-      if (tooBig.length) alert(`Có ${tooBig.length} ảnh lớn hơn 10MB, đã bỏ qua.`);
-      const ok = imgs.filter((f) => f.size <= 10 * 1024 * 1024);
+      const lim = MAX_IMAGE_MB * 1024 * 1024;
+      const tooBig = imgs.filter((f) => f.size > lim);
+      if (tooBig.length) alert(`Có ${tooBig.length} ảnh lớn hơn ${MAX_IMAGE_MB}MB, đã bỏ qua.`);
+      const ok = imgs.filter((f) => f.size <= lim);
       setBusy((b) => b + ok.length);
       await Promise.all(
         ok.map(async (f) => {
@@ -466,6 +463,227 @@ export function GalleryField({
         className="hidden"
         onChange={(e) => {
           upload(Array.from(e.target.files || []), (u) => list.add({ url: u, alt: "" }));
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
+/* ===================== Ô ảnh gọn (link + nút tải lên) ===================== */
+
+/** Dùng cho chỗ hẹp (VD: ảnh chia sẻ OG). Vẫn dán link được như cũ, thêm nút tải ảnh từ máy. */
+export function ImageUrlInput({
+  name,
+  defaultValue = "",
+  folder,
+  placeholder = "Dán link hoặc bấm tải ảnh lên",
+  onDirty,
+}: {
+  name: string;
+  defaultValue?: string;
+  folder?: string;
+  placeholder?: string;
+  onDirty?: () => void;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { busy, upload } = useUploader(folder);
+  const set = (u: string) => {
+    setValue(u);
+    onDirty?.();
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input name={name} value={value} onChange={(e) => setValue(e.target.value)} className={inputCls} placeholder={placeholder} />
+        <button
+          type="button"
+          className={`${btnCls.secondary} shrink-0 px-2.5`}
+          onClick={() => fileRef.current?.click()}
+          disabled={busy > 0}
+          title="Tải ảnh từ máy lên"
+        >
+          {busy > 0 ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+        </button>
+      </div>
+      {value && (
+        <div className="relative w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={thumb(value, 480)} alt="" className="aspect-[1.91/1] w-full object-contain" />
+          <button
+            type="button"
+            onClick={() => set("")}
+            className="absolute right-1.5 top-1.5 rounded-md bg-white/90 p-1 text-slate-500 shadow hover:text-red-600"
+            title="Gỡ ảnh"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) upload([f], set);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
+/* ===================== Video (tải lên hoặc dán link) ===================== */
+
+function youtubeEmbed(s: string) {
+  try {
+    const u = new URL(s);
+    if (/(^|\.)youtube\.com$/.test(u.hostname)) {
+      const v =
+        u.searchParams.get("v") ||
+        (u.pathname.startsWith("/embed/") || u.pathname.startsWith("/shorts/") ? u.pathname.split("/")[2] : "");
+      if (v) return `https://www.youtube.com/embed/${v}`;
+    }
+    if (u.hostname === "youtu.be") return `https://www.youtube.com/embed/${u.pathname.slice(1)}`;
+  } catch {}
+  return null;
+}
+
+function isVideoFileUrl(s: string) {
+  try {
+    const u = new URL(s);
+    return /\.(mp4|webm|ogg|mov|m4v)$/i.test(u.pathname) || u.pathname.includes("/video/upload/");
+  } catch {
+    return false;
+  }
+}
+
+export function VideoPicker({
+  name,
+  value,
+  onChange,
+  folder = "mcbrother/videos",
+}: {
+  name: string;
+  value: string;
+  onChange: (url: string) => void;
+  folder?: string;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pct, setPct] = useState<number | null>(null);
+  const [err, setErr] = useState("");
+  const [drag, setDrag] = useState(false);
+  const [justUploaded, setJustUploaded] = useState(false);
+
+  const s = value.trim();
+  const yt = s ? youtubeEmbed(s) : null;
+  const file = s && !yt && isVideoFileUrl(s);
+  const poster = cloudinaryVideoPoster(s) || undefined;
+
+  async function doUpload(f: File | undefined) {
+    if (!f) return;
+    if (!f.type.startsWith("video/")) return setErr("File này không phải video.");
+    if (f.size > MAX_VIDEO_MB * 1024 * 1024) return setErr(`Video lớn hơn ${MAX_VIDEO_MB}MB.`);
+    setErr("");
+    setPct(0);
+    try {
+      const url = await uploadMedia(f, { kind: "video", folder, onProgress: setPct });
+      onChange(url);
+      setJustUploaded(true);
+    } catch (e: any) {
+      setErr(e?.message || "Tải video thất bại");
+    } finally {
+      setPct(null);
+    }
+  }
+
+  const uploading = pct !== null;
+
+  return (
+    <div className="space-y-3">
+      <div
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes("Files")) {
+            e.preventDefault();
+            setDrag(true);
+          }
+        }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDrag(false);
+          if (!uploading) doUpload(e.dataTransfer.files[0]);
+        }}
+        className={`flex flex-wrap items-center gap-2 rounded-lg ${drag ? "ring-2 ring-blue-500 ring-offset-4" : ""}`}
+      >
+        <button type="button" className={btnCls.secondary} onClick={() => fileRef.current?.click()} disabled={uploading}>
+          {uploading ? <Loader2 size={16} className="animate-spin" /> : <Film size={16} />}
+          {uploading ? `Đang tải… ${Math.round(pct!)}%` : s ? "Đổi video (tải lên)" : "Tải video lên"}
+        </button>
+        {s && !uploading && (
+          <button
+            type="button"
+            className={`${btnCls.secondary} text-red-600`}
+            onClick={() => {
+              onChange("");
+              setJustUploaded(false);
+            }}
+          >
+            <X size={16} /> Gỡ video
+          </button>
+        )}
+        <span className="text-xs text-slate-400">hoặc kéo thả file video vào đây</span>
+      </div>
+
+      {uploading && (
+        <div className="h-2 w-full max-w-md overflow-hidden rounded-full bg-slate-200">
+          <div className="h-full bg-blue-600 transition-all" style={{ width: `${pct}%` }} />
+        </div>
+      )}
+
+      <input
+        name={name}
+        type="url"
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setJustUploaded(false);
+        }}
+        className={inputCls}
+        placeholder="Hoặc dán link YouTube / link video MP4…"
+        disabled={uploading}
+      />
+
+      {err && <p className="text-xs text-red-600">{err}</p>}
+      {justUploaded && (
+        <p className="text-xs text-emerald-700">
+          Đã tải lên. Video đang được tối ưu, nếu khung xem trước chưa chạy thì đợi vài phút rồi tải lại trang — nhớ bấm Lưu.
+        </p>
+      )}
+
+      {yt && (
+        <div className="aspect-video max-w-md overflow-hidden rounded-lg bg-black">
+          <iframe src={yt} className="h-full w-full" allowFullScreen title="Xem trước video" />
+        </div>
+      )}
+      {file && (
+        <div className="aspect-video max-w-md overflow-hidden rounded-lg bg-black">
+          <video key={s} src={s} poster={poster} className="h-full w-full" controls preload="metadata" />
+        </div>
+      )}
+      {s && !yt && !file && <p className="text-xs text-amber-600">Không nhận dạng được link video.</p>}
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="video/*"
+        className="hidden"
+        onChange={(e) => {
+          doUpload(e.target.files?.[0]);
           e.target.value = "";
         }}
       />

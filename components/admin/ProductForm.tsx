@@ -17,9 +17,11 @@ import {
   Field,
   GalleryField,
   ImagePicker,
+  ImageUrlInput,
   RowControls,
   Switch,
   Toast,
+  VideoPicker,
   btnCls,
   inputCls,
   useList,
@@ -100,21 +102,6 @@ function orderCategories(cats: CategoryOption[]) {
 
 const fmtPrice = (digits: string) => (digits ? Number(digits).toLocaleString("vi-VN") : "");
 
-function videoPreview(raw: string): { type: "yt" | "mp4"; src: string } | null {
-  const s = raw.trim();
-  if (!s) return null;
-  try {
-    const u = new URL(s);
-    if (/(^|\.)youtube\.com$/.test(u.hostname)) {
-      const v = u.searchParams.get("v") || (u.pathname.startsWith("/embed/") ? u.pathname.split("/")[2] : "");
-      if (v) return { type: "yt", src: `https://www.youtube.com/embed/${v}` };
-    }
-    if (u.hostname === "youtu.be") return { type: "yt", src: `https://www.youtube.com/embed/${u.pathname.slice(1)}` };
-    if (/\.(mp4|webm|ogg)$/i.test(u.pathname) || u.pathname.includes("/video/upload/")) return { type: "mp4", src: s };
-  } catch {}
-  return null;
-}
-
 /* ===================== Component ===================== */
 
 export default function ProductForm({
@@ -173,7 +160,6 @@ export default function ProductForm({
         : WARRANTY,
     [initial.warranty]
   );
-  const vp = videoPreview(video);
   const productUrl = `${siteUrl.replace(/\/$/, "")}/san-pham/${slug || "duong-dan"}`;
   const seoTitle = metaTitle || name || "Tên sản phẩm";
   const seoDesc = metaDesc || short.replace(/\s+/g, " ").slice(0, 160) || "Mô tả ngắn hiển thị trên Google…";
@@ -415,25 +401,15 @@ export default function ProductForm({
                 <GalleryField name="images" initial={initial.images} folder="mcbrother/products" onDirty={markDirty} />
               </Field>
 
-              <Field label="Video" hint="Dán link YouTube hoặc link video Cloudinary/MP4.">
-                <input
+              <Field label="Video" hint="Tải video quay máy từ điện thoại/máy tính lên, hoặc dán link YouTube.">
+                <VideoPicker
                   name="videoUrl"
-                  type="url"
                   value={video}
-                  onChange={(e) => setVideo(e.target.value)}
-                  className={inputCls}
-                  placeholder="https://www.youtube.com/watch?v=…"
+                  onChange={(u) => {
+                    setVideo(u);
+                    markDirty();
+                  }}
                 />
-                {vp && (
-                  <div className="mt-3 aspect-video max-w-md overflow-hidden rounded-lg bg-black">
-                    {vp.type === "yt" ? (
-                      <iframe src={vp.src} className="h-full w-full" allowFullScreen title="Xem trước video" />
-                    ) : (
-                      <video src={vp.src} className="h-full w-full" controls />
-                    )}
-                  </div>
-                )}
-                {video && !vp && <p className="mt-1 text-xs text-amber-600">Không nhận dạng được link video.</p>}
               </Field>
             </div>
           </Card>
@@ -783,7 +759,7 @@ export default function ProductForm({
                 </summary>
                 <div className="space-y-3 border-t border-slate-100 p-3">
                   <Field label="Ảnh chia sẻ (OG image)" hint="Để trống → dùng ảnh đại diện">
-                    <input name="ogImage" defaultValue={initial.ogImage} className={inputCls} placeholder="https://…" />
+                    <ImageUrlInput name="ogImage" defaultValue={initial.ogImage} folder="mcbrother/products" onDirty={markDirty} />
                   </Field>
                   <Field label="Canonical URL" hint="Chỉ điền khi trang này trùng nội dung với trang khác">
                     <input name="canonicalUrl" defaultValue={initial.canonicalUrl} className={inputCls} placeholder="https://…" />
