@@ -1,5 +1,7 @@
 // lib/upload-client.ts
-// Upload ảnh / video từ trình duyệt (trang admin) thẳng lên Cloudinary, có % tiến trình.
+// Upload ảnh / video từ trình duyệt (trang admin), có % tiến trình.
+//   - Ảnh  → Cloudinary (để web tự resize / WebP / AVIF)
+//   - Video → Cloudflare R2 nếu đã cấu hình (/api/upload/r2), chưa thì Cloudinary
 // Server chỉ ký (/api/upload/sign), file không đi qua server → không bị giới hạn dung lượng của Vercel.
 // File lớn (> 20MB) được chia nhỏ từng phần 20MB rồi gửi lần lượt.
 
@@ -22,13 +24,13 @@ const CHUNK = 20 * 1024 * 1024;
 
 function post(
   url: string,
-  fd: FormData,
+  fd: FormData | Blob,
   headers: Record<string, string>,
   onProgress?: (loaded: number) => void
 ): Promise<any> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
+    xhr.open(fd instanceof FormData ? "POST" : "PUT", url);
     Object.entries(headers).forEach(([k, v]) => xhr.setRequestHeader(k, v));
     xhr.upload.onprogress = (e) => onProgress?.(e.loaded);
     xhr.onload = () => {
@@ -36,7 +38,7 @@ function post(
       try {
         json = JSON.parse(xhr.responseText);
       } catch {}
-      if (xhr.status >= 200 && xhr.status < 300) resolve(json);
+      if (xhr.status >= 200 && xhr.status < 300) resolve(json ?? {});
       else reject(new Error(json?.error?.message || `Upload lỗi (${xhr.status})`));
     };
     xhr.onerror = () => reject(new Error("Mất kết nối khi upload"));
@@ -93,6 +95,37 @@ async function signedUpload(file: File, kind: UploadKind, folder: string | undef
   return kind === "video" ? videoUrl(s, result) : (result.secure_url as string);
 }
 
+/** Đoán content-type theo đuôi file khi trình duyệt không nhận ra (hay gặp với .mov trên Windows). */
+function videoType(file: File) {
+  if (file.type) return file.type;
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  return ({ mp4: "video/mp4", m4v: "video/x-m4v", mov: "video/quicktime", webm: "video/webm" } as Record<string, string>)[ext || ""] || "";
+}
+
+/**
+ * Video → Cloudflare R2 (nếu server đã cấu hình R2). Trả null khi chưa cấu hình để dùng Cloudinary.
+ */
+async function r2VideoUpload(file: File, onProgress?: (pct: number) => void): Promise<string | null> {
+  const contentType = videoType(file);
+  const r = await fetch("/api/upload/r2", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name, contentType, size: file.size }),
+  });
+  const j = await r.json().catch(() => null);
+  if (j && j.configured === false) return null;
+  if (!r.ok || !j?.ok) throw new Error(j?.error || "Không lấy được link upload R2");
+
+  try {
+    await post(j.uploadUrl, file, { "Content-Type": j.contentType }, (l) => onProgress?.(Math.min(99, (l / file.size) * 100)));
+  } catch (e: any) {
+    // status 0 / mất kết nối ngay lập tức thường do bucket chưa bật CORS cho tên miền web
+    throw new Error(`${e?.message || "Upload lỗi"} — kiểm tra CORS của bucket R2`);
+  }
+  onProgress?.(100);
+  return j.publicUrl as string;
+}
+
 /** Đường cũ qua /api/upload (chỉ ảnh, ≤ ~4MB trên Vercel) — dùng khi không ký được. */
 async function legacyImageUpload(file: File) {
   const fd = new FormData();
@@ -114,9 +147,14 @@ export async function uploadMedia(
   const kind: UploadKind = opts.kind || (file.type.startsWith("video/") ? "video" : "image");
 
   if (kind === "image" && !file.type.startsWith("image/")) throw new Error("Chỉ nhận file ảnh");
-  if (kind === "video" && !file.type.startsWith("video/")) throw new Error("Chỉ nhận file video");
+  if (kind === "video" && !videoType(file).startsWith("video/")) throw new Error("Chỉ nhận file video");
   const maxMb = kind === "video" ? MAX_VIDEO_MB : MAX_IMAGE_MB;
   if (file.size > maxMb * 1024 * 1024) throw new Error(`File quá lớn (> ${maxMb}MB)`);
+
+  if (kind === "video") {
+    const r2 = await r2VideoUpload(file, opts.onProgress);
+    if (r2) return r2;
+  }
 
   try {
     return await signedUpload(file, kind, opts.folder, opts.onProgress);

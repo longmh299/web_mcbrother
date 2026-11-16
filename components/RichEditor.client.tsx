@@ -423,7 +423,7 @@ export default function RichEditorClient({
                     const url = await uploadMedia(f, { kind: 'video', folder: 'mcbrother/videos', onProgress: (p) => note.progressBar.value(p) });
                     const poster = cloudinaryVideoPoster(url) || '';
                     editor.insertContent(
-                      `<p><video controls preload="metadata" src="${url}"${poster ? ` poster="${poster}"` : ''} width="100%"></video></p>`
+                      `<p><video controls preload="metadata" src="${poster ? url : `${url}#t=0.1`}"${poster ? ` poster="${poster}"` : ''} width="100%"></video></p>`
                     );
                     note.close();
                     editor.notificationManager.open({ text: 'Đã chèn video. Nếu chưa xem được ngay, đợi vài phút để hệ thống tối ưu video.', type: 'success', timeout: 6000 });

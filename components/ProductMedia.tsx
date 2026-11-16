@@ -53,7 +53,7 @@ export default function ProductMedia({
     safeVideoUrl?.includes("reel");
 
   const isVideoFile = safeVideoUrl
-    ? /\.(mp4|webm|ogg)$/i.test(safeVideoUrl) || /res\.cloudinary\.com\/.+\/video\/upload\//.test(safeVideoUrl)
+    ? /\.(mp4|webm|ogg|m4v|mov)$/i.test(safeVideoUrl) || /res\.cloudinary\.com\/.+\/video\/upload\//.test(safeVideoUrl)
     : false;
   // Video tải lên Cloudinary → lấy khung hình làm ảnh bìa
   const cldPoster = cloudinaryVideoPoster(safeVideoUrl, 800);
@@ -109,7 +109,7 @@ export default function ProductMedia({
             style={isShort ? { aspectRatio: "9 / 16", maxWidth: "100%" } : { width: "100%" }}
           >
             {isVideoFile ? (
-              <video src={safeVideoUrl!} poster={cldPoster || undefined} controls playsInline preload="metadata" className="absolute inset-0 h-full w-full object-contain" />
+              <video src={cldPoster ? safeVideoUrl! : `${safeVideoUrl}#t=0.1`} poster={cldPoster || undefined} controls playsInline preload="metadata" className="absolute inset-0 h-full w-full object-contain" />
             ) : canEmbed ? (
               <iframe
                 src={embedUrl}

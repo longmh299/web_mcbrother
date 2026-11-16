@@ -586,7 +586,7 @@ export function VideoPicker({
 
   async function doUpload(f: File | undefined) {
     if (!f) return;
-    if (!f.type.startsWith("video/")) return setErr("File này không phải video.");
+    if (!f.type.startsWith("video/") && !/\.(mp4|m4v|mov|webm)$/i.test(f.name)) return setErr("File này không phải video.");
     if (f.size > MAX_VIDEO_MB * 1024 * 1024) return setErr(`Video lớn hơn ${MAX_VIDEO_MB}MB.`);
     setErr("");
     setPct(0);
@@ -661,7 +661,14 @@ export function VideoPicker({
       {err && <p className="text-xs text-red-600">{err}</p>}
       {justUploaded && (
         <p className="text-xs text-emerald-700">
-          Đã tải lên. Video đang được tối ưu, nếu khung xem trước chưa chạy thì đợi vài phút rồi tải lại trang — nhớ bấm Lưu.
+          {s.includes("res.cloudinary.com")
+            ? "Đã tải lên. Video đang được tối ưu, nếu khung xem trước chưa chạy thì đợi vài phút rồi tải lại trang — nhớ bấm Lưu."
+            : "Đã tải lên — nhớ bấm Lưu."}
+        </p>
+      )}
+      {justUploaded && /\.mov$/i.test(s) && (
+        <p className="text-xs text-amber-600">
+          File .MOV có thể không xem được trên Chrome/Android. Nên xuất video sang MP4 (H.264) rồi tải lại.
         </p>
       )}
 
@@ -672,7 +679,7 @@ export function VideoPicker({
       )}
       {file && (
         <div className="aspect-video max-w-md overflow-hidden rounded-lg bg-black">
-          <video key={s} src={s} poster={poster} className="h-full w-full" controls preload="metadata" />
+          <video key={s} src={poster ? s : `${s}#t=0.1`} poster={poster} className="h-full w-full" controls preload="metadata" />
         </div>
       )}
       {s && !yt && !file && <p className="text-xs text-amber-600">Không nhận dạng được link video.</p>}
