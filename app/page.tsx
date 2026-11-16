@@ -145,7 +145,7 @@ const getHomepageData = cache(async () => {
 const STATS = [
   { value: "10+", label: "năm trong ngành" },
   { value: "1.200+", label: "khách hàng tin dùng" },
-  { value: "Toàn quốc", label: "giao hàng & lắp đặt" },
+  { value: "Toàn quốc", label: "giao hàng" },
   { value: "24/7", label: "tư vấn miễn phí" },
 ];
 
@@ -179,7 +179,7 @@ export default async function HomePage() {
         </h1>
         <p className="max-w-[640px] text-[17px] leading-relaxed text-[var(--color-muted)] md:text-[19px]">
           MCBROTHER cung cấp máy chế biến thực phẩm, máy đóng gói, máy chiết rót, máy hút chân không,
-          máy dán nhãn và dây chuyền sản xuất. Tư vấn, lắp đặt và bảo hành trên toàn quốc.
+          máy dán nhãn và dây chuyền sản xuất. Giao hàng toàn quốc, lắp đặt tận nơi tại TP.HCM và các tỉnh lân cận.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Link href="/san-pham" className="btn-pill-primary min-h-[54px] px-8 text-[16px]">
