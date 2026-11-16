@@ -16,6 +16,14 @@ export async function GET(req: Request) {
       return res;
     }
 
+    const qSlug = q
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
     const categoryId =
       categoryIdRaw === null || categoryIdRaw === "" ? undefined : Number(categoryIdRaw);
 
@@ -24,6 +32,8 @@ export async function GET(req: Request) {
       OR: [
         { name: { contains: q, mode: "insensitive" } },
         { slug: { contains: q, mode: "insensitive" } },
+        // Gõ không dấu / có khoảng trắng ("may dan nhan") vẫn khớp slug "may-dan-nhan-…"
+        ...(qSlug && qSlug !== q ? [{ slug: { contains: qSlug, mode: "insensitive" } }] : []),
         { sku:  { contains: q, mode: "insensitive" } },
       ],
     };

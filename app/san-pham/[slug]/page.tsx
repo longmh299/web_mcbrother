@@ -400,13 +400,19 @@ export default async function ProductDetailPage(
             )}
             <li className="flex items-center gap-3">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
-              Giao hàng, lắp đặt & hướng dẫn vận hành tận nơi
+              Giao hàng toàn quốc, lắp đặt tận nơi tại TP.HCM và các tỉnh lân cận
             </li>
             <li className="flex items-center gap-3">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
               Hỗ trợ kỹ thuật trọn đời máy
             </li>
           </ul>
+          <Link
+            href="/chinh-sach-bao-hanh-giao-hang"
+            className="w-fit text-[14px] text-[var(--color-muted)] underline underline-offset-4 hover:text-[var(--color-ink)]"
+          >
+            Xem chính sách bảo hành & giao hàng
+          </Link>
         </div>
       </section>
 

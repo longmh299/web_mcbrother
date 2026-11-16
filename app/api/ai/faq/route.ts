@@ -41,7 +41,7 @@ function ruleBased(name: string, warranty: string | null, existing: string[]): F
     {
       question: "MCBROTHER có giao hàng và lắp đặt tận nơi không?",
       answer:
-        "Có. MCBROTHER giao hàng toàn quốc; với máy cần lắp đặt, kỹ thuật viên hỗ trợ lắp đặt và hướng dẫn vận hành tận nơi. Liên hệ để được báo chi phí vận chuyển theo địa chỉ cụ thể.",
+        "MCBROTHER giao hàng toàn quốc. Khu vực TP.HCM và các tỉnh lân cận được ưu tiên hỗ trợ lắp đặt, chạy thử và hướng dẫn vận hành tận nơi. Liên hệ để được báo chi phí vận chuyển theo địa chỉ cụ thể.",
     },
     {
       question: `Làm sao để nhận báo giá ${name}?`,
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
   const prompt = `Bạn viết mục "Câu hỏi thường gặp" cho trang sản phẩm của MCBROTHER — công ty bán máy chế biến & đóng gói thực phẩm công nghiệp ở TP.HCM.
 
 Chính sách chung của công ty (được phép dùng):
-- Giao hàng toàn quốc; lắp đặt và hướng dẫn vận hành tận nơi.
+- Giao hàng toàn quốc; khu vực TP.HCM và các tỉnh lân cận được ưu tiên lắp đặt, hướng dẫn vận hành tận nơi.
 - Hỗ trợ kỹ thuật trọn đời máy, có sẵn linh kiện thay thế.
 - Báo giá qua hotline ${SITE.phoneDisplay}, Zalo hoặc form liên hệ trên website.
 

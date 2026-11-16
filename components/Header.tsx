@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SITE } from "@/lib/site";
+import HeaderSearch from "./HeaderSearch";
 
 type Cat = {
   id: number;
@@ -166,8 +167,9 @@ export default function Header({ categories = [] }: { categories: Cat[] }) {
           })}
         </nav>
 
-        {/* PHẢI: hotline + báo giá */}
+        {/* PHẢI: tìm kiếm + hotline + báo giá */}
         <div className="hidden items-center gap-5 md:flex">
+          <HeaderSearch />
           <a
             href={`tel:${SITE.phone}`}
             className="text-[15px] font-semibold text-[var(--color-ink)] hover:text-[var(--color-primary)]"
@@ -179,18 +181,21 @@ export default function Header({ categories = [] }: { categories: Cat[] }) {
           </Link>
         </div>
 
-        {/* NÚT MENU MOBILE */}
-        <button
-          type="button"
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-line)] md:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-label={open ? "Đóng menu" : "Mở menu"}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-            {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-          </svg>
-        </button>
+        {/* MOBILE: tìm kiếm + nút menu */}
+        <div className="flex items-center gap-2 md:hidden">
+          <HeaderSearch />
+          <button
+            type="button"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-line)]"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label={open ? "Đóng menu" : "Mở menu"}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+              {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* MENU MOBILE */}
