@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { PlayCircle } from "lucide-react";
 import WatermarkImage from "./WatermarkImage";
 import { isAllowedEmbed, isHttpUrl } from "@/lib/url";
+import { cloudinaryVideoPoster } from "@/lib/upload-client";
 
 type GalleryImage = { url: string; alt?: string | null };
 
@@ -51,7 +52,11 @@ export default function ProductMedia({
     safeVideoUrl?.includes("tiktok") ||
     safeVideoUrl?.includes("reel");
 
-  const isVideoFile = safeVideoUrl ? /\.(mp4|webm|ogg)$/i.test(safeVideoUrl) : false;
+  const isVideoFile = safeVideoUrl
+    ? /\.(mp4|webm|ogg|m4v|mov)$/i.test(safeVideoUrl) || /res\.cloudinary\.com\/.+\/video\/upload\//.test(safeVideoUrl)
+    : false;
+  // Video tải lên Cloudinary → lấy khung hình làm ảnh bìa
+  const cldPoster = cloudinaryVideoPoster(safeVideoUrl, 800);
 
   const embedUrl = safeVideoUrl
     ? safeVideoUrl.replace("youtu.be/", "youtube.com/embed/").replace("shorts/", "embed/")
@@ -68,7 +73,7 @@ export default function ProductMedia({
       safeVideoUrl.match(/\/(?:embed|shorts)\/([\w-]{6,})/);
     return m ? m[1] : null;
   })();
-  const videoThumb = ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : null;
+  const videoThumb = ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : cldPoster;
 
   // Dải ảnh thu nhỏ hiện khi có từ 2 ảnh trở lên, hoặc khi sản phẩm có video
   const showStrip = gallery.length > 1 || hasVideo;
@@ -104,7 +109,7 @@ export default function ProductMedia({
             style={isShort ? { aspectRatio: "9 / 16", maxWidth: "100%" } : { width: "100%" }}
           >
             {isVideoFile ? (
-              <video src={safeVideoUrl!} controls playsInline className="absolute inset-0 h-full w-full object-contain" />
+              <video src={cldPoster ? safeVideoUrl! : `${safeVideoUrl}#t=0.1`} poster={cldPoster || undefined} controls playsInline preload="metadata" className="absolute inset-0 h-full w-full object-contain" />
             ) : canEmbed ? (
               <iframe
                 src={embedUrl}

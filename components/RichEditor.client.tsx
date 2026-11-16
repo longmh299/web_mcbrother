@@ -3,6 +3,7 @@
 import * as React from 'react';
 import dynamic from 'next/dynamic';
 import type { IAllProps as TinyMCEProps } from '@tinymce/tinymce-react';
+import { cloudinaryVideoPoster, uploadMedia } from '@/lib/upload-client';
 const productTemplate = `
 <h2>Tên sản phẩm | Giải pháp tối ưu cho sản xuất</h2>
 
@@ -313,7 +314,7 @@ export default function RichEditorClient({
             h2 h3 |
             bold italic |
             bullist numlist |
-            link image |
+            link image videoupload |
             table |
             block
           `,
@@ -333,19 +334,10 @@ export default function RichEditorClient({
           paste_data_images: true,
           image_dimensions: false,
 
-          images_upload_handler: async (blobInfo) => {
-            const formData = new FormData();
-            formData.append('file', blobInfo.blob());
-
-            const res = await fetch('/api/upload', {
-              method: 'POST',
-              body: formData,
-            });
-
-            const data = await res.json();
-
-            if (!data.ok) throw new Error(data.error);
-            return data.url;
+          images_upload_handler: async (blobInfo, progress) => {
+            const blob = blobInfo.blob();
+            const file = new File([blob], blobInfo.filename() || 'image.jpg', { type: blob.type || 'image/jpeg' });
+            return uploadMedia(file, { kind: 'image', folder: 'mcbrother/content', onProgress: progress });
           },
 
           /* ===== MEDIA LIBRARY ===== */
@@ -414,6 +406,35 @@ export default function RichEditorClient({
           placeholder,
 
           setup: (editor) => {
+
+            /* ===== Nút tải video lên & chèn vào bài ===== */
+            editor.ui.registry.addButton('videoupload', {
+              icon: 'embed',
+              tooltip: 'Tải video lên & chèn',
+              onAction: () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'video/*';
+                input.onchange = async () => {
+                  const f = input.files?.[0];
+                  if (!f) return;
+                  const note = editor.notificationManager.open({ text: `Đang tải video ${f.name}…`, type: 'info', progressBar: true });
+                  try {
+                    const url = await uploadMedia(f, { kind: 'video', folder: 'mcbrother/videos', onProgress: (p) => note.progressBar.value(p) });
+                    const poster = cloudinaryVideoPoster(url) || '';
+                    editor.insertContent(
+                      `<p><video controls preload="metadata" src="${poster ? url : `${url}#t=0.1`}"${poster ? ` poster="${poster}"` : ''} width="100%"></video></p>`
+                    );
+                    note.close();
+                    editor.notificationManager.open({ text: 'Đã chèn video. Nếu chưa xem được ngay, đợi vài phút để hệ thống tối ưu video.', type: 'success', timeout: 6000 });
+                  } catch (e: any) {
+                    note.close();
+                    editor.notificationManager.open({ text: e?.message || 'Tải video thất bại', type: 'error', timeout: 6000 });
+                  }
+                };
+                input.click();
+              },
+            });
 
             editor.ui.registry.addMenuButton('block', {
               text: 'Chèn nhanh',

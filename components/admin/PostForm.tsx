@@ -12,7 +12,7 @@ import SeoSuggestButton from "./SeoSuggestButton";
 import AiPostWriter from "./AiPostWriter";
 import { slugify } from "@/lib/slug";
 import { savePost } from "@/app/admin/news/actions";
-import { Card, CharCount, Field, ImagePicker, Switch, Toast, btnCls, inputCls, useToast } from "./ui";
+import { Card, CharCount, Field, ImagePicker, ImageUrlInput, Switch, Toast, btnCls, inputCls, useToast } from "./ui";
 
 export type PostFormData = {
   id?: number;
@@ -467,7 +467,7 @@ export default function PostForm({
                 </summary>
                 <div className="space-y-3 border-t border-slate-100 p-3">
                   <Field label="Ảnh chia sẻ (OG image)" hint="Để trống → dùng ảnh đại diện">
-                    <input name="ogImage" defaultValue={initial.ogImage} className={inputCls} placeholder="https://…" />
+                    <ImageUrlInput name="ogImage" defaultValue={initial.ogImage} folder="mcbrother/posts" onDirty={markDirty} />
                   </Field>
                   <Field label="Canonical URL" hint="Chỉ điền khi bài này trùng nội dung với trang khác">
                     <input name="canonicalUrl" defaultValue={initial.canonicalUrl} className={inputCls} placeholder="https://…" />

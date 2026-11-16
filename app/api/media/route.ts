@@ -19,7 +19,7 @@ export async function GET() {
 
   try {
     const result = await cloudinary.search
-      .expression('folder:mcbrother/*')
+      .expression('folder:mcbrother/* AND resource_type:image')
       .sort_by('created_at', 'desc')
       .max_results(50)
       .execute();

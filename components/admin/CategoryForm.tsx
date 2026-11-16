@@ -9,7 +9,7 @@ import { ArrowLeft, ExternalLink, Loader2, Save, Trash2 } from "lucide-react";
 import { slugify } from "@/lib/slug";
 import { deleteCategory, saveCategory } from "@/app/admin/categories/actions";
 import { deletePostCategory, savePostCategory } from "@/app/admin/news-categories/actions";
-import { Card, CharCount, Field, ImagePicker, Switch, Toast, btnCls, inputCls, useToast } from "./ui";
+import { Card, CharCount, Field, ImagePicker, ImageUrlInput, Switch, Toast, btnCls, inputCls, useToast } from "./ui";
 
 export type CategoryKind = "product" | "post";
 
@@ -326,7 +326,7 @@ export default function CategoryForm({
                 </summary>
                 <div className="space-y-3 border-t border-slate-100 p-3">
                   <Field label="Ảnh chia sẻ (OG image)" hint="Để trống → dùng ảnh banner">
-                    <input name="ogImage" defaultValue={initial.ogImage} className={inputCls} placeholder="https://…" />
+                    <ImageUrlInput name="ogImage" defaultValue={initial.ogImage} folder={cfg.folder} onDirty={markDirty} />
                   </Field>
                   <Field label="Canonical URL">
                     <input name="canonicalUrl" defaultValue={initial.canonicalUrl} className={inputCls} placeholder="https://…" />
