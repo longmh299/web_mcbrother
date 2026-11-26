@@ -91,6 +91,15 @@ h1, h2, h3 {
   margin: .5rem 0;
 }
 
+/* Mô tả sản phẩm: cả khối nội dung nằm trong cột 820px giữa khung trắng
+   (đặt bằng max-w-[820px] mx-auto ở trang sản phẩm). Bảng dán từ ChatGPT/Word
+   thường bọc trong <div class="w-fit …"> → ép bảng và wrapper rộng đủ cột. */
+.desc-readable div:has(> table),
+.desc-readable table {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
 /* ===== MARQUEE ===== */
 @keyframes marquee {
   0% { transform: translateX(0); }

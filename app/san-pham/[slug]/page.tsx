@@ -490,7 +490,7 @@ export default async function ProductDetailPage(
             <div className="overflow-x-auto rounded-[28px] bg-white p-5 md:p-12">
               <div
                 className="
-                  blog-content prose max-w-none text-[16px]
+                  blog-content desc-readable prose mx-auto max-w-[820px] text-[16px]
                   [&_p]:!max-w-none [&_h2]:!max-w-none [&_h3]:!max-w-none [&_ul]:!max-w-none [&_ol]:!max-w-none [&_table]:!w-full
                   prose-headings:font-display prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-[var(--color-ink)]
                   prose-h2:mb-3 prose-h2:mt-10 first:prose-h2:mt-0 prose-h3:my-3
