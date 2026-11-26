@@ -91,6 +91,24 @@ h1, h2, h3 {
   margin: .5rem 0;
 }
 
+/* Mô tả sản phẩm: gom chữ, bảng, ảnh vào một cột ~820px ở giữa khung trắng
+   → dòng chữ khoảng 80–95 ký tự, dễ đọc; bảng thẳng hàng với chữ. */
+.desc-readable > p,
+.desc-readable > h2,
+.desc-readable > h3,
+.desc-readable > h4,
+.desc-readable > ul,
+.desc-readable > ol,
+.desc-readable > blockquote,
+.desc-readable > hr,
+.desc-readable > table,
+.desc-readable > figure,
+.desc-readable > .table-wrap {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ===== MARQUEE ===== */
 @keyframes marquee {
   0% { transform: translateX(0); }
