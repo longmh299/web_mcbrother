@@ -109,7 +109,7 @@ export default function ProductMedia({
             style={isShort ? { aspectRatio: "9 / 16", maxWidth: "100%" } : { width: "100%" }}
           >
             {isVideoFile ? (
-              <video src={cldPoster ? safeVideoUrl! : `${safeVideoUrl}#t=0.1`} poster={cldPoster || undefined} controls playsInline preload="metadata" className="absolute inset-0 h-full w-full object-contain" />
+              <video src={cldPoster ? safeVideoUrl! : `${safeVideoUrl}#t=0.1`} poster={cldPoster || undefined} controls controlsList="nodownload" disablePictureInPicture onContextMenu={(e) => e.preventDefault()} playsInline preload="metadata" className="absolute inset-0 h-full w-full object-contain" />
             ) : canEmbed ? (
               <iframe
                 src={embedUrl}

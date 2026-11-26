@@ -46,7 +46,7 @@ export function sanitizeHtml(html: string | null | undefined, opts: Options = {}
         "loading",
         "referrerpolicy",
       ],
-      video: [...common, "src", "controls", "poster", "width", "height", "preload"],
+      video: [...common, "src", "controls", "poster", "width", "height", "preload", "controlslist", "disablepictureinpicture", "playsinline"],
       source: ["src", "type"],
       td: [...common, "colspan", "rowspan", "align", "valign", "width"],
       th: [...common, "colspan", "rowspan", "align", "valign", "width", "scope"],
@@ -60,6 +60,12 @@ export function sanitizeHtml(html: string | null | undefined, opts: Options = {}
     allowedIframeHostnames: EMBED_HOSTS,
     allowIframeRelativeUrls: false,
     transformTags: {
+      // Video trong bài: ẩn nút "Tải xuống" và "Hình trong hình" trên trình phát
+      // (áp dụng cả cho bài cũ, không cần sửa nội dung)
+      video: (tagName, attribs) => ({
+        tagName,
+        attribs: { ...attribs, controlslist: "nodownload", disablepictureinpicture: "", playsinline: "" },
+      }),
       // Link mở tab mới → thêm rel an toàn
       a: (tagName, attribs) => {
         if (attribs.target === "_blank") {
